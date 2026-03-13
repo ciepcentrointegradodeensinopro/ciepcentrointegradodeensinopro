@@ -1,20 +1,24 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# CIEP - Centro Integrado de Ensino Pró
 
-# Run and deploy your AI Studio app
+Este é o sistema de gestão escolar do CIEP, desenvolvido com Next.js e Supabase.
 
-This contains everything you need to run your app locally.
+## Como implantar na Vercel
 
-View your app in AI Studio: https://ai.studio/apps/dff22708-0c42-49ee-9427-0fea8eb9f3a1
+1. **Conecte seu repositório:** No dashboard da Vercel, importe este projeto.
+2. **Configure as Variáveis de Ambiente:** No passo de configuração, adicione as seguintes variáveis (conforme listado no `.env.example`):
+   - `NEXT_PUBLIC_SUPABASE_URL`: URL do seu projeto Supabase.
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Chave anônima do seu projeto Supabase.
+   - `NEXT_PUBLIC_GOOGLE_API_KEY`: Sua chave de API do Google (para integração com Drive).
+   - `NEXT_PUBLIC_GOOGLE_CLIENT_ID`: Seu Client ID do Google.
+   - `NEXT_PUBLIC_GOOGLE_APP_ID`: Seu App ID do Google.
+   - `NEXT_PUBLIC_GEMINI_API_KEY`: Sua chave de API do Gemini (opcional).
+3. **Build & Install:** A Vercel detectará automaticamente o Next.js. O comando de build padrão (`npm run build`) e o diretório de saída (`.next`) funcionarão corretamente.
+4. **Deploy:** Clique em "Deploy" e aguarde a finalização.
 
-## Run Locally
+## Tecnologias Utilizadas
 
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+- **Next.js 15+** (App Router)
+- **Tailwind CSS** (Estilização)
+- **Framer Motion** (Animações)
+- **Supabase** (Banco de Dados e Autenticação)
+- **Lucide React** (Ícones)
