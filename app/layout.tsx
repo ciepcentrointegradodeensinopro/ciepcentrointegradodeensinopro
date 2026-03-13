@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'EduGestão - Portal do Aluno',
+  title: 'CiepApp - Portal do Aluno',
   description: 'Sistema de gestão escolar moderno.',
 };
 

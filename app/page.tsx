@@ -64,7 +64,7 @@ export default function LoginPage() {
           <div className="text-green-500 flex size-12 items-center justify-center rounded-xl bg-green-500/10">
             <LogIn className="w-8 h-8" />
           </div>
-          <h2 className="text-slate-100 text-xl font-bold pl-4">EduGestão</h2>
+          <h2 className="text-slate-100 text-xl font-bold pl-4">CiepApp</h2>
         </div>
 
         {/* Hero Image */}

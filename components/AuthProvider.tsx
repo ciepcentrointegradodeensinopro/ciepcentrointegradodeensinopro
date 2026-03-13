@@ -110,7 +110,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           <div className="space-y-2">
             <h1 className="text-2xl font-bold text-white">Configuração Necessária</h1>
             <p className="text-slate-400">
-              Para utilizar o EduGestão, você precisa configurar sua conexão com o Supabase.
+              Para utilizar o CiepApp, você precisa configurar sua conexão com o Supabase.
             </p>
           </div>
           <div className="bg-slate-950 rounded-xl p-4 text-left space-y-3 border border-slate-800">
