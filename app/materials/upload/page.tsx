@@ -1,0 +1,261 @@
+'use client';
+
+import React from 'react';
+import { Header } from '@/components/Header';
+import { BottomNav } from '@/components/BottomNav';
+import { CloudUpload, FileText, BookOpen, Layers, Eye, Send, ExternalLink, Link as LinkIcon } from 'lucide-react';
+import { motion } from 'motion/react';
+import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
+
+// Google API Config
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+const GOOGLE_APP_ID = process.env.NEXT_PUBLIC_GOOGLE_APP_ID;
+
+export default function UploadMaterialPage() {
+  const router = useRouter();
+  const [isVisible, setIsVisible] = React.useState(true);
+  const [loading, setLoading] = React.useState(false);
+  const [title, setTitle] = React.useState('');
+  const [discipline, setDiscipline] = React.useState('');
+  const [category, setCategory] = React.useState('');
+  const [description, setDescription] = React.useState('');
+  const [fileUrl, setFileUrl] = React.useState('');
+  const [fileName, setFileName] = React.useState('');
+
+  // Google Picker Logic
+  const handleGoogleDrive = () => {
+    if (!GOOGLE_API_KEY || !GOOGLE_CLIENT_ID) {
+      alert('Configuração do Google Drive ausente. Verifique as variáveis de ambiente (NEXT_PUBLIC_GOOGLE_API_KEY e NEXT_PUBLIC_GOOGLE_CLIENT_ID).');
+      return;
+    }
+
+    // Load Google API
+    const script = document.createElement('script');
+    script.src = 'https://apis.google.com/js/api.js';
+    script.onload = () => {
+      const gapi = (window as any).gapi;
+      const google = (window as any).google;
+
+      gapi.load('auth2', () => {
+        gapi.auth2.authorize({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: 'https://www.googleapis.com/auth/drive.readonly',
+          immediate: false
+        }, (authResult: any) => {
+          if (authResult && !authResult.error) {
+            const oauthToken = authResult.access_token;
+            gapi.load('picker', () => {
+              const picker = new google.picker.PickerBuilder()
+                .addView(google.picker.ViewId.DOCS)
+                .setOAuthToken(oauthToken)
+                .setDeveloperKey(GOOGLE_API_KEY)
+                .setAppId(GOOGLE_APP_ID || '')
+                .setCallback((data: any) => {
+                  if (data.action === google.picker.Action.PICKED) {
+                    const doc = data.docs[0];
+                    setFileUrl(doc.url);
+                    setFileName(doc.name);
+                    if (!title) setTitle(doc.name);
+                  }
+                })
+                .build();
+              picker.setVisible(true);
+            });
+          }
+        });
+      });
+    };
+    document.body.appendChild(script);
+  };
+
+  const handlePublish = async () => {
+    if (!title || !fileUrl) {
+      alert('Por favor, preencha o título e selecione um arquivo.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.from('materials').insert({
+        title,
+        discipline,
+        category,
+        description,
+        file_url: fileUrl,
+        type: category === 'vid' ? 'Video' : 'PDF',
+        status: isVisible ? 'active' : 'pending'
+      });
+
+      if (error) throw error;
+
+      alert('Material publicado com sucesso!');
+      router.push('/materials');
+    } catch (error: any) {
+      alert('Erro ao publicar: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col">
+      <Header title="Upload de Materiais" />
+
+      <main className="flex-1 overflow-y-auto p-4 pb-32">
+        <div className="max-w-md mx-auto space-y-6">
+          {/* Upload Area */}
+          <div className="grid grid-cols-1 gap-4">
+            <div 
+              onClick={handleGoogleDrive}
+              className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-green-500/40 bg-green-500/5 hover:bg-green-500/10 transition-colors px-6 py-8 cursor-pointer group"
+            >
+              <div className="size-12 bg-green-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                <ExternalLink className="w-6 h-6 text-green-500" />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-bold text-green-500">Google Drive (Automático)</p>
+                <p className="text-[10px] text-green-500/60">Abrir seletor do Google</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 space-y-3">
+              <div className="flex items-center gap-2 text-slate-400">
+                <LinkIcon className="w-4 h-4" />
+                <span className="text-xs font-bold uppercase tracking-wider">Ou cole o link manual</span>
+              </div>
+              <div className="flex gap-2">
+                <input 
+                  type="text"
+                  value={fileUrl}
+                  onChange={(e) => setFileUrl(e.target.value)}
+                  placeholder="https://drive.google.com/file/d/..."
+                  className="flex-1 rounded-xl border border-slate-800 bg-slate-950 h-12 px-4 text-sm focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                />
+                {fileUrl && (
+                  <button 
+                    onClick={() => { setFileUrl(''); setFileName(''); }}
+                    className="bg-red-500/10 text-red-500 px-3 rounded-xl text-xs font-bold"
+                  >
+                    Limpar
+                  </button>
+                )}
+              </div>
+              <p className="text-[10px] text-slate-500">Certifique-se de que o link esteja configurado como &quot;Qualquer pessoa com o link pode ler&quot; no Google Drive.</p>
+            </div>
+          </div>
+
+          {fileName && (
+            <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-xl flex items-center gap-3">
+              <FileText className="w-5 h-5 text-green-500" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold truncate">{fileName}</p>
+                <p className="text-[10px] text-green-500/60">Arquivo selecionado</p>
+              </div>
+              <button onClick={() => { setFileName(''); setFileUrl(''); }} className="text-[10px] font-bold text-red-500 uppercase">Remover</button>
+            </div>
+          )}
+
+          {/* Form */}
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-300">Título do Material</label>
+              <input 
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Ex: Apostila de Matemática - Módulo 1"
+                className="w-full rounded-xl border border-slate-800 bg-slate-900 h-14 px-4 focus:ring-2 focus:ring-green-500 outline-none transition-all"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-300">Disciplina</label>
+                <select 
+                  value={discipline}
+                  onChange={(e) => setDiscipline(e.target.value)}
+                  className="w-full appearance-none rounded-xl border border-slate-800 bg-slate-900 h-14 px-4 focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                >
+                  <option value="">Selecione a disciplina</option>
+                  <option value="motos">Mecânica de Motos</option>
+                  <option value="auto">Mecânica Automotiva</option>
+                  <option value="eletrica">Mecânica Elétrica</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-300">Categoria</label>
+                <select 
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full appearance-none rounded-xl border border-slate-800 bg-slate-900 h-14 px-4 focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                >
+                  <option value="">Tipo de material</option>
+                  <option value="pdf">PDF / Apostila</option>
+                  <option value="exe">Exercício</option>
+                  <option value="vid">Vídeo Aula</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-300">Descrição</label>
+              <textarea 
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Breve resumo sobre o conteúdo do material..."
+                className="w-full rounded-xl border border-slate-800 bg-slate-900 min-h-[120px] p-4 focus:ring-2 focus:ring-green-500 outline-none transition-all resize-none"
+              />
+            </div>
+
+            {/* Visibility Toggle */}
+            <div className="flex items-center justify-between p-4 rounded-xl border border-slate-800 bg-slate-900/50">
+              <div className="flex items-center gap-3">
+                <Eye className="w-6 h-6 text-green-500" />
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold">Visível para Alunos</span>
+                  <span className="text-[10px] text-slate-500 font-bold uppercase">Alunos poderão visualizar após a publicação</span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsVisible(!isVisible)}
+                className={cn(
+                  "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
+                  isVisible ? "bg-green-500" : "bg-slate-700"
+                )}
+              >
+                <span 
+                  className={cn(
+                    "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                    isVisible ? "translate-x-6" : "translate-x-1"
+                  )}
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer className="fixed bottom-0 left-0 right-0 p-4 bg-slate-950/80 backdrop-blur-md border-t border-slate-800 z-50">
+        <div className="max-w-md mx-auto w-full">
+          <button 
+            onClick={handlePublish}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-500/20 transition-all active:scale-[0.98]"
+          >
+            {loading ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+            ) : (
+              <>
+                <Send className="w-5 h-5" />
+                Publicar Material
+              </>
+            )}
+          </button>
+        </div>
+      </footer>
+    </div>
+  );
+}
