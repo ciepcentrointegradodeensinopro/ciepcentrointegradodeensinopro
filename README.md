@@ -2,6 +2,7 @@
 
 Este é o sistema de gestão escolar do CIEP, desenvolvido com Next.js e Supabase.
 
+
 ## Como implantar na Vercel
 
 1. **Conecte seu repositório:** No dashboard da Vercel, importe este projeto.
