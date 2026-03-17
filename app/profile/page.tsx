@@ -4,16 +4,18 @@ import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { User, Download, School, Clock, ChevronRight, Settings, Bell, Lock, CreditCard, BookOpen, LogOut, Edit2 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
+import { useMounted } from '@/hooks/useMounted';
 import Image from 'next/image';
 
 export default function ProfilePage() {
   const router = useRouter();
   const { profile, loading, isAdmin } = useAuth();
+  const mounted = useMounted();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
 
@@ -102,13 +104,15 @@ export default function ProfilePage() {
                     <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-green-500"></div>
                   </div>
                 ) : null}
-                <Image 
-                  src={profile?.avatar_url || `https://picsum.photos/seed/${profile?.id}/200/200`} 
-                  alt={profile?.full_name || "User Profile"} 
-                  fill
-                  className="object-cover" 
-                  referrerPolicy="no-referrer"
-                />
+                {mounted && (
+                  <Image 
+                    src={profile?.avatar_url || `https://picsum.photos/seed/${profile?.id}/200/200`} 
+                    alt={profile?.full_name || "User Profile"} 
+                    fill
+                    className="object-cover" 
+                    referrerPolicy="no-referrer"
+                  />
+                )}
               </div>
               <input 
                 type="file" 

@@ -3,14 +3,16 @@
 import React from 'react';
 import Link from 'next/link';
 import { User, Mail, School, Lock, LockKeyhole, Eye, EyeOff, ArrowLeft, Edit3, Plus } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
+import { useMounted } from '@/hooks/useMounted';
 import Image from 'next/image';
 
 export default function RegisterPage() {
   const { user, loading: authLoading } = useAuth();
+  const mounted = useMounted();
   const [showPassword, setShowPassword] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -153,7 +155,7 @@ export default function RegisterPage() {
             >
               <div className="size-24 rounded-full bg-slate-900 border-2 border-slate-700 flex items-center justify-center overflow-hidden relative">
                 {avatarUrl ? (
-                  <Image src={avatarUrl} alt="Preview" fill className="object-cover" />
+                  mounted && <Image src={avatarUrl} alt="Preview" fill className="object-cover" />
                 ) : (
                   <User className="w-10 h-10 text-slate-600" />
                 )}

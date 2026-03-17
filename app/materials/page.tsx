@@ -4,15 +4,17 @@ import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { FileText, Download, ChevronRight, Search, BookOpen, Clock, File, Plus } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 
 import { useAuth } from '@/components/AuthProvider';
+import { useMounted } from '@/hooks/useMounted';
 
 export default function MaterialsListPage() {
   const { isAdmin, loading: authLoading } = useAuth();
+  const mounted = useMounted();
   const [materials, setMaterials] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -104,7 +106,7 @@ export default function MaterialsListPage() {
                         <div className="min-w-0">
                           <h3 className="font-bold truncate">{item.title}</h3>
                           <p className="text-[10px] text-green-500 font-bold uppercase tracking-wider">{getDisciplineName(item.discipline)}</p>
-                          <p className="text-xs text-slate-500">{item.type} • {new Date(item.created_at).toLocaleDateString('pt-BR')}</p>
+                          <p className="text-xs text-slate-500">{item.type} • {mounted ? new Date(item.created_at).toLocaleDateString('pt-BR') : ''}</p>
                         </div>
                       </Link>
                       <button 

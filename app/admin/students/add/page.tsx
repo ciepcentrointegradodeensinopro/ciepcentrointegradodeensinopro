@@ -3,17 +3,19 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { User, Mail, Hash, School, Save, X, Camera, Edit3 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 
 import { useAuth } from '@/components/AuthProvider';
+import { useMounted } from '@/hooks/useMounted';
 import Image from 'next/image';
 
 export default function AddStudentPage() {
   const router = useRouter();
   const { profile, loading: authLoading } = useAuth();
+  const mounted = useMounted();
   const [isActive, setIsActive] = React.useState(true);
   const [loading, setLoading] = React.useState(false);
   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
@@ -100,13 +102,15 @@ export default function AddStudentPage() {
               className="relative group cursor-pointer"
             >
               <div className="size-32 rounded-full bg-slate-900 border-4 border-green-500/20 flex items-center justify-center overflow-hidden relative">
-                <Image 
-                  src={avatarUrl || "https://picsum.photos/seed/upload/200/200"} 
-                  alt="Profile" 
-                  fill
-                  className={cn("object-cover transition-opacity", !avatarUrl && "opacity-50 group-hover:opacity-30")}
-                  referrerPolicy="no-referrer"
-                />
+                {mounted && (
+                  <Image 
+                    src={avatarUrl || "https://picsum.photos/seed/upload/200/200"} 
+                    alt="Profile" 
+                    fill
+                    className={cn("object-cover transition-opacity", !avatarUrl && "opacity-50 group-hover:opacity-30")}
+                    referrerPolicy="no-referrer"
+                  />
+                )}
                 {!avatarUrl && (
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <Camera className="w-8 h-8 text-white" />

@@ -4,17 +4,19 @@ import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { ArrowLeft, Search, Plus, Eye, Edit2, Trash2 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 
 import { useAuth } from '@/components/AuthProvider';
+import { useMounted } from '@/hooks/useMounted';
 
 import Image from 'next/image';
 
 export default function StudentsPage() {
   const { isAdmin, loading: authLoading } = useAuth();
+  const mounted = useMounted();
   const [students, setStudents] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState('');
@@ -127,13 +129,15 @@ export default function StudentsPage() {
           >
             <div className="flex items-center gap-4">
               <div className="relative shrink-0 w-14 h-14">
-                <Image 
-                  src={student.avatar_url || `https://picsum.photos/seed/${student.id}/100/100`} 
-                  alt={student.full_name || "Student Avatar"} 
-                  fill
-                  className="rounded-full bg-slate-800 object-cover" 
-                  referrerPolicy="no-referrer"
-                />
+                {mounted && (
+                  <Image 
+                    src={student.avatar_url || `https://picsum.photos/seed/${student.id}/100/100`} 
+                    alt={student.full_name || "Student Avatar"} 
+                    fill
+                    className="rounded-full bg-slate-800 object-cover" 
+                    referrerPolicy="no-referrer"
+                  />
+                )}
                 <span className={cn("absolute bottom-0 right-0 w-3.5 h-3.5 border-2 border-slate-900 rounded-full bg-green-500")}></span>
               </div>
               <div className="flex-1 min-w-0">

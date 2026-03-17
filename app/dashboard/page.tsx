@@ -4,17 +4,19 @@ import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Users, FileText, AlertCircle, Plus, Upload, DollarSign, Settings, ChevronRight, School, Bell, User, BookOpen, BadgeCheck, LogIn } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import { useMounted } from '@/hooks/useMounted';
 
 import Image from 'next/image';
 
 export default function Dashboard() {
   const { profile, loading: authLoading, isAdmin } = useAuth();
+  const mounted = useMounted();
   const [loading, setLoading] = React.useState(true);
   const [stats, setStats] = React.useState<any[]>([]);
   const [activities, setActivities] = React.useState<any[]>([]);
@@ -119,13 +121,15 @@ export default function Dashboard() {
             <span className="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-slate-950"></span>
           </button>
           <div className="size-10 rounded-full overflow-hidden border-2 border-green-500/20 relative">
-            <Image 
-              src={profile?.avatar_url || `https://picsum.photos/seed/${profile?.id}/100/100`} 
-              alt="Profile" 
-              fill
-              className="object-cover" 
-              referrerPolicy="no-referrer"
-            />
+            {mounted && (
+              <Image 
+                src={profile?.avatar_url || `https://picsum.photos/seed/${profile?.id}/100/100`} 
+                alt="Profile" 
+                fill
+                className="object-cover" 
+                referrerPolicy="no-referrer"
+              />
+            )}
           </div>
         </div>
       </header>
@@ -212,7 +216,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <span className="text-[10px] text-slate-500 font-bold">
-                  {new Date(item.created_at).toLocaleDateString()}
+                  {mounted ? new Date(item.created_at).toLocaleDateString() : ''}
                 </span>
               </div>
             )) : (

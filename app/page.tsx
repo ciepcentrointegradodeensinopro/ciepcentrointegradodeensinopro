@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Mail, Lock, LogIn, HelpCircle, Info, Eye, EyeOff } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';

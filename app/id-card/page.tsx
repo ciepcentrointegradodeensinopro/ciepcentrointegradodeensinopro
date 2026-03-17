@@ -4,14 +4,16 @@ import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { School, BadgeCheck, Download, Share2, Verified, QrCode } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 
 import { useAuth } from '@/components/AuthProvider';
+import { useMounted } from '@/hooks/useMounted';
 import Image from 'next/image';
 
 export default function IDCardPage() {
   const { profile, loading, isAdmin } = useAuth();
+  const mounted = useMounted();
 
   if (loading) {
     return (
@@ -51,13 +53,15 @@ export default function IDCardPage() {
             {/* Student Info */}
             <div className="flex gap-4 mb-6">
               <div className="w-28 h-36 bg-slate-800 rounded-lg overflow-hidden border-2 border-green-500/20 flex-shrink-0 relative">
-                <Image 
-                  src={profile?.avatar_url || `https://picsum.photos/seed/${profile?.id}/200/300`} 
-                  alt={profile?.full_name || "Student ID Photo"} 
-                  fill
-                  className="object-cover" 
-                  referrerPolicy="no-referrer"
-                />
+                {mounted && (
+                  <Image 
+                    src={profile?.avatar_url || `https://picsum.photos/seed/${profile?.id}/200/300`} 
+                    alt={profile?.full_name || "Student ID Photo"} 
+                    fill
+                    className="object-cover" 
+                    referrerPolicy="no-referrer"
+                  />
+                )}
               </div>
               <div className="flex flex-col justify-center">
                 <div className="mb-2">

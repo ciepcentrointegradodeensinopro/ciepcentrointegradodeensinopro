@@ -4,16 +4,18 @@ import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { DollarSign, FileText, Copy, CheckCircle, Clock, Filter, ChevronRight, Plus } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 
 import { useAuth } from '@/components/AuthProvider';
+import { useMounted } from '@/hooks/useMounted';
 
 export default function FinancePage() {
   const router = useRouter();
   const { profile, isAdmin, loading: authLoading } = useAuth();
+  const mounted = useMounted();
   const [payments, setPayments] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [totalOpen, setTotalOpen] = React.useState(0);
@@ -97,13 +99,13 @@ export default function FinancePage() {
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="font-bold">Mensalidade - {new Date(bill.due_date).toLocaleDateString('pt-BR', { month: 'long' })}</h3>
+                        <h3 className="font-bold">Mensalidade - {mounted ? new Date(bill.due_date).toLocaleDateString('pt-BR', { month: 'long' }) : ''}</h3>
                         {isAdmin && (
                           <p className="text-[10px] text-green-500 font-bold uppercase tracking-wider">
                             Aluno: {bill.profiles?.full_name}
                           </p>
                         )}
-                        <p className="text-xs text-slate-500">Vencimento: {new Date(bill.due_date).toLocaleDateString('pt-BR')}</p>
+                        <p className="text-xs text-slate-500">Vencimento: {mounted ? new Date(bill.due_date).toLocaleDateString('pt-BR') : ''}</p>
                       </div>
                       <span className={cn(
                         "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest",

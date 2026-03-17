@@ -4,15 +4,17 @@ import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { FileText, Download, CheckCircle, MessageSquare, Clock, File, PlayCircle } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { useMounted } from '@/hooks/useMounted';
 
 export default function MaterialDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
+  const mounted = useMounted();
   const [material, setMaterial] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
 
@@ -100,7 +102,7 @@ export default function MaterialDetailsPage() {
             <div>
               <p className="text-sm font-bold">Prof. Roberto Silva</p>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                Postado em {new Date(material.created_at).toLocaleDateString('pt-BR')} • {getDisciplineName(material.discipline) || 'Geral'}
+                Postado em {mounted ? new Date(material.created_at).toLocaleDateString('pt-BR') : ''} • {getDisciplineName(material.discipline) || 'Geral'}
               </p>
             </div>
           </div>
