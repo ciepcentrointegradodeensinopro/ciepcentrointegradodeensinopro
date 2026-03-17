@@ -19,7 +19,7 @@ export default function ProfilePage() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push('/');
+    window.location.href = '/';
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
