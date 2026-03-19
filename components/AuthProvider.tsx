@@ -25,9 +25,65 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+  const pathnameRef = React.useRef(pathname);
+
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
 
   useEffect(() => {
     console.log('AuthProvider: Initializing...', { isSupabaseConfigured });
+    
+    // Global error listener for Supabase AuthApiErrors that might bubble up
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const error = event.reason;
+      const isAuthError = error && (
+        error.name === 'AuthApiError' || 
+        error.message?.includes('Refresh Token Not Found') ||
+        error.message?.includes('invalid_grant') ||
+        error.status === 400 ||
+        error.status === 401
+      );
+
+      if (isAuthError) {
+        console.log('AuthProvider: Global AuthApiError caught, clearing storage and preventing default...');
+        // Prevent the error from showing the Next.js overlay
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // Clear storage manually to stop the refresh loop
+        try {
+          const keys = Object.keys(localStorage);
+          keys.forEach(key => {
+            if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+              localStorage.removeItem(key);
+            }
+          });
+          
+          // Also try to clear cookies if possible (though limited in client-side JS)
+          document.cookie.split(";").forEach((c) => {
+            document.cookie = c
+              .replace(/^ +/, "")
+              .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+          });
+        } catch (e) {
+          console.error('Error clearing storage:', e);
+        }
+        
+        // Reset state
+        setUser(null);
+        setProfile(null);
+        setLoading(false);
+        
+        // If we're not on a public route, redirect to login
+        const publicRoutes = ['/', '/register'];
+        if (pathnameRef.current && !publicRoutes.includes(pathnameRef.current)) {
+          router.push('/');
+        }
+      }
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
     
     // Safety timeout to prevent infinite loading if Supabase hangs
     const timeout = setTimeout(() => {
@@ -39,16 +95,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('AuthProvider: Supabase not configured');
       setLoading(false);
       clearTimeout(timeout);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
       return;
     }
 
     const getSession = async () => {
       try {
         console.log('AuthProvider: Fetching session...');
+        // Use a try-catch specifically for the getSession call to catch immediate throws
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
-          console.error('Session fetch error:', sessionError);
+          console.error('Session fetch error in object:', sessionError);
+          // If the refresh token is invalid, sign out to clear local storage
+          const isAuthError = sessionError.message?.includes('Refresh Token Not Found') || 
+                             sessionError.message?.includes('invalid_grant') ||
+                             sessionError.name === 'AuthApiError' ||
+                             (sessionError as any).status === 400 ||
+                             (sessionError as any).status === 401;
+
+          if (isAuthError) {
+            console.log('AuthProvider: Invalid refresh token detected in error object, signing out...');
+            await supabase.auth.signOut().catch(() => {
+              // If signOut fails, manually clear storage as a last resort
+              console.log('AuthProvider: signOut failed, clearing storage manually');
+              try {
+                const keys = Object.keys(localStorage);
+                keys.forEach(key => {
+                  if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+                    localStorage.removeItem(key);
+                  }
+                });
+              } catch (e) {}
+            });
+          }
           setLoading(false);
           return;
         }
@@ -83,8 +163,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.error('Profile fetch error in getSession:', profileErr);
           }
         }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
+      } catch (error: any) {
+        console.error('Auth initialization error caught in try-catch:', error);
+        // Handle cases where getSession might throw AuthApiError
+        const isAuthError = error.message?.includes('Refresh Token Not Found') || 
+                           error.message?.includes('invalid_grant') ||
+                           error.name === 'AuthApiError' ||
+                           error.status === 400 ||
+                           error.status === 401;
+
+        if (isAuthError) {
+          console.log('AuthProvider: AuthApiError caught in try-catch, signing out...');
+          await supabase.auth.signOut().catch(() => {
+            try {
+              const keys = Object.keys(localStorage);
+              keys.forEach(key => {
+                if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+                  localStorage.removeItem(key);
+                }
+              });
+            } catch (e) {}
+          });
+        }
       } finally {
         console.log('AuthProvider: Initialization complete');
         setLoading(false);
@@ -118,8 +218,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
       clearTimeout(timeout);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };
-  }, []);
+  }, [router]);
 
   // Basic route protection
   useEffect(() => {

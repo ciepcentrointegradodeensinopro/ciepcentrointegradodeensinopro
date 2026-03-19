@@ -4,7 +4,7 @@ import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { School, BadgeCheck, Download, Share2, Verified, QrCode } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { supabase } from '@/lib/supabase';
 
 import { useAuth } from '@/components/AuthProvider';
