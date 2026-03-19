@@ -81,6 +81,11 @@ export default function UploadMaterialPage() {
 
     setLoading(true);
     try {
+      console.log('UploadMaterialPage: Publishing material...', { title, category, discipline });
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado.');
+
       const { error } = await supabase.from('materials').insert({
         title,
         discipline,
@@ -91,14 +96,28 @@ export default function UploadMaterialPage() {
         status: isVisible ? 'active' : 'pending'
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('UploadMaterialPage: Insert error', error);
+        throw error;
+      }
 
+      console.log('UploadMaterialPage: Success!');
       setShowSuccess(true);
+      
+      // Clear form
+      setTitle('');
+      setFileUrl('');
+      setFileName('');
+      setDiscipline('');
+      setCategory('');
+      setDescription('');
+
       setTimeout(() => {
         router.push('/materials');
-      }, 1500);
+      }, 2000);
     } catch (error: any) {
-      alert('Erro ao publicar: ' + error.message);
+      console.error('UploadMaterialPage: Publish exception', error);
+      alert('Erro ao publicar: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setLoading(false);
     }

@@ -34,7 +34,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     console.log('AuthProvider: Initializing...', { isSupabaseConfigured });
     
-    // Global error listener for Supabase AuthApiErrors that might bubble up
+    // Safety timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      console.log('AuthProvider: Safety timeout reached, forcing loading false');
+      setLoading(false);
+    }, 8000);
+
+    if (!isSupabaseConfigured) {
+      console.log('AuthProvider: Supabase not configured');
+      setLoading(false);
+      clearTimeout(timeout);
+      return;
+    }
+
+    // Global error listener for Supabase AuthApiErrors
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       const error = event.reason;
       const isAuthError = error && (
@@ -46,12 +59,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       );
 
       if (isAuthError) {
-        console.log('AuthProvider: Global AuthApiError caught, clearing storage and preventing default...');
-        // Prevent the error from showing the Next.js overlay
+        console.log('AuthProvider: Global AuthApiError caught', error.message);
         event.preventDefault();
         event.stopPropagation();
         
-        // Clear storage manually to stop the refresh loop
         try {
           const keys = Object.keys(localStorage);
           keys.forEach(key => {
@@ -59,23 +70,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               localStorage.removeItem(key);
             }
           });
-          
-          // Also try to clear cookies if possible (though limited in client-side JS)
-          document.cookie.split(";").forEach((c) => {
-            document.cookie = c
-              .replace(/^ +/, "")
-              .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-          });
-        } catch (e) {
-          console.error('Error clearing storage:', e);
-        }
+        } catch (e) {}
         
-        // Reset state
         setUser(null);
         setProfile(null);
         setLoading(false);
         
-        // If we're not on a public route, redirect to login
         const publicRoutes = ['/', '/register'];
         if (pathnameRef.current && !publicRoutes.includes(pathnameRef.current)) {
           router.push('/');
@@ -84,134 +84,97 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     window.addEventListener('unhandledrejection', handleUnhandledRejection);
-    
-    // Safety timeout to prevent infinite loading if Supabase hangs
-    const timeout = setTimeout(() => {
-      console.log('AuthProvider: Safety timeout reached');
-      setLoading(false);
-    }, 5000);
 
-    if (!isSupabaseConfigured) {
-      console.log('AuthProvider: Supabase not configured');
-      setLoading(false);
-      clearTimeout(timeout);
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
-      return;
-    }
-
-    const getSession = async () => {
+    const fetchProfile = async (userId: string, userEmail?: string) => {
       try {
-        console.log('AuthProvider: Fetching session...');
-        // Use a try-catch specifically for the getSession call to catch immediate throws
+        console.log('AuthProvider: Fetching profile for', userId);
+        let { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+        
+        if (error) {
+          console.log('AuthProvider: Profile fetch error (expected if new user)', error.message);
+          return null;
+        }
+
+        // Auto-upgrade admin role if email matches
+        if (userEmail === 'ciepcentrointegradodeensinopro@gmail.com' && data.role !== 'admin') {
+          console.log('AuthProvider: Auto-upgrading admin role in database');
+          const { data: updatedData, error: updateError } = await supabase
+            .from('profiles')
+            .update({ role: 'admin' })
+            .eq('user_id', userId)
+            .select()
+            .single();
+          
+          if (!updateError) {
+            return updatedData;
+          }
+        }
+
+        return data;
+      } catch (err) {
+        console.error('AuthProvider: Profile fetch exception', err);
+        return null;
+      }
+    };
+
+    const initialize = async () => {
+      try {
+        console.log('AuthProvider: Starting initialization');
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
-          console.error('Session fetch error in object:', sessionError);
-          // If the refresh token is invalid, sign out to clear local storage
-          const isAuthError = sessionError.message?.includes('Refresh Token Not Found') || 
-                             sessionError.message?.includes('invalid_grant') ||
-                             sessionError.name === 'AuthApiError' ||
-                             (sessionError as any).status === 400 ||
-                             (sessionError as any).status === 401;
-
-          if (isAuthError) {
-            console.log('AuthProvider: Invalid refresh token detected in error object, signing out...');
-            await supabase.auth.signOut().catch(() => {
-              // If signOut fails, manually clear storage as a last resort
-              console.log('AuthProvider: signOut failed, clearing storage manually');
-              try {
-                const keys = Object.keys(localStorage);
-                keys.forEach(key => {
-                  if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
-                    localStorage.removeItem(key);
-                  }
-                });
-              } catch (e) {}
-            });
-          }
-          setLoading(false);
-          return;
+          console.error('AuthProvider: getSession error', sessionError.message);
+          throw sessionError;
         }
 
-        console.log('AuthProvider: Session fetched', { hasUser: !!session?.user });
-        setUser(session?.user ?? null);
-        
         if (session?.user) {
-          try {
-            console.log('AuthProvider: Fetching profile for user', session.user.id);
-            // Try to fetch profile
-            let { data, error } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('user_id', session.user.id)
-              .single();
-            
-            if (error && session.user) {
-              console.log('AuthProvider: Profile not found, retrying...');
-              // Wait a bit and try again (for new users where profile might be created by trigger)
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              const { data: retryData } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('user_id', session.user.id)
-                .single();
-              data = retryData;
-            }
-            console.log('AuthProvider: Profile fetched', { hasProfile: !!data });
-            setProfile(data);
-          } catch (profileErr) {
-            console.error('Profile fetch error in getSession:', profileErr);
-          }
+          console.log('AuthProvider: Initial session found', session.user.id);
+          setUser(session.user);
+          const profileData = await fetchProfile(session.user.id, session.user.email);
+          setProfile(profileData);
+        } else {
+          console.log('AuthProvider: No initial session');
+          setUser(null);
+          setProfile(null);
         }
       } catch (error: any) {
-        console.error('Auth initialization error caught in try-catch:', error);
-        // Handle cases where getSession might throw AuthApiError
-        const isAuthError = error.message?.includes('Refresh Token Not Found') || 
-                           error.message?.includes('invalid_grant') ||
-                           error.name === 'AuthApiError' ||
-                           error.status === 400 ||
-                           error.status === 401;
-
-        if (isAuthError) {
-          console.log('AuthProvider: AuthApiError caught in try-catch, signing out...');
+        console.error('AuthProvider: Initialization error', error);
+        if (error.message?.includes('Refresh Token') || error.status === 400 || error.status === 401) {
           await supabase.auth.signOut().catch(() => {
-            try {
-              const keys = Object.keys(localStorage);
-              keys.forEach(key => {
-                if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
-                  localStorage.removeItem(key);
-                }
-              });
-            } catch (e) {}
+            localStorage.clear();
           });
         }
       } finally {
-        console.log('AuthProvider: Initialization complete');
+        console.log('AuthProvider: Initialization finally block');
         setLoading(false);
         clearTimeout(timeout);
       }
     };
 
-    getSession();
+    initialize();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('AuthProvider: Auth state changed', { event, hasUser: !!session?.user });
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        try {
-          const { data } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .single();
-          setProfile(data);
-        } catch (error) {
-          console.error('Profile fetch error in onAuthStateChange:', error);
-        }
-      } else {
+      console.log('AuthProvider: onAuthStateChange', event, session?.user?.id);
+      
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
         setProfile(null);
+        setLoading(false);
+      } else if (session?.user) {
+        setUser(session.user);
+        // Only fetch profile if it's not already set or if it's a login event
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+          const profileData = await fetchProfile(session.user.id, session.user.email);
+          setProfile(profileData);
+        }
+        setLoading(false);
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
       clearTimeout(timeout);
     });
 

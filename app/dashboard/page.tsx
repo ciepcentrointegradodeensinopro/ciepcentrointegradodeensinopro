@@ -23,9 +23,12 @@ export default function Dashboard() {
   const router = useRouter();
 
   const fetchData = React.useCallback(async () => {
-    console.log('Dashboard: fetchData called', { profileId: profile?.id });
-    if (!profile) {
-      console.log('Dashboard: No profile, stopping fetch');
+    console.log('Dashboard: fetchData called', { profileId: profile?.id, isAdmin });
+    
+    // For students, we need a profile. For admin, we can proceed even without a profile record
+    // as long as the email matches.
+    if (!profile && !isAdmin) {
+      console.log('Dashboard: No profile and not admin, stopping fetch');
       setLoading(false);
       return;
     }
@@ -33,8 +36,8 @@ export default function Dashboard() {
     setLoading(true);
 
     try {
-      console.log('Dashboard: Fetching data for role', profile.role);
-      if (profile?.role === 'admin') {
+      console.log('Dashboard: Fetching data. IsAdmin:', isAdmin);
+      if (isAdmin) {
         // Fetch admin stats
         const { count: studentCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student');
         const { count: materialCount } = await supabase.from('materials').select('*', { count: 'exact', head: true });
@@ -80,19 +83,20 @@ export default function Dashboard() {
       console.log('Dashboard: Setting loading to false');
       setLoading(false);
     }
-  }, [profile]);
+  }, [profile, isAdmin]);
 
   React.useEffect(() => {
-    console.log('Dashboard: useEffect triggered', { authLoading, hasProfile: !!profile });
+    console.log('Dashboard: useEffect triggered', { authLoading, hasProfile: !!profile, isAdmin });
     if (!authLoading) {
-      if (profile) {
+      // If we have a profile OR we are an admin (by email), fetch data
+      if (profile || isAdmin) {
         fetchData();
       } else {
-        console.log('Dashboard: authLoading false but no profile, setting loading false');
+        console.log('Dashboard: authLoading false, no profile and not admin, setting loading false');
         setLoading(false);
       }
     }
-  }, [authLoading, profile, fetchData]);
+  }, [authLoading, profile, isAdmin, fetchData]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
