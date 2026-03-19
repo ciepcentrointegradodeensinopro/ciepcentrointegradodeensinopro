@@ -12,7 +12,8 @@ import { supabase } from '@/lib/supabase';
 import { useMounted } from '@/hooks/useMounted';
 
 export default function MaterialDetailsPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id as string;
   const router = useRouter();
   const mounted = useMounted();
   const [material, setMaterial] = React.useState<any>(null);

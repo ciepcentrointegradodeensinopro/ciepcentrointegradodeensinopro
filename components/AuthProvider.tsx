@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!loading && isSupabaseConfigured) {
       const publicRoutes = ['/', '/register'];
-      if (!user && !publicRoutes.includes(pathname)) {
+      if (!user && pathname && !publicRoutes.includes(pathname)) {
         router.push('/');
       }
     }
