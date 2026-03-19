@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import { Toast } from '@/components/Toast';
 
 // Google API Config
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
@@ -18,6 +19,7 @@ export default function UploadMaterialPage() {
   const router = useRouter();
   const [isVisible, setIsVisible] = React.useState(true);
   const [loading, setLoading] = React.useState(false);
+  const [showSuccess, setShowSuccess] = React.useState(false);
   const [title, setTitle] = React.useState('');
   const [discipline, setDiscipline] = React.useState('');
   const [category, setCategory] = React.useState('');
@@ -91,8 +93,10 @@ export default function UploadMaterialPage() {
 
       if (error) throw error;
 
-      alert('Material publicado com sucesso!');
-      router.push('/materials');
+      setShowSuccess(true);
+      setTimeout(() => {
+        router.push('/materials');
+      }, 1500);
     } catch (error: any) {
       alert('Erro ao publicar: ' + error.message);
     } finally {
@@ -103,6 +107,11 @@ export default function UploadMaterialPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col">
       <Header title="Upload de Materiais" />
+      <Toast 
+        message="Material publicado com sucesso!" 
+        isVisible={showSuccess} 
+        onClose={() => setShowSuccess(false)} 
+      />
 
       <main className="flex-1 overflow-y-auto p-4 pb-32">
         <div className="max-w-md mx-auto space-y-6">

@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
+import { Toast } from '@/components/Toast';
 
 import { useAuth } from '@/components/AuthProvider';
 import { useMounted } from '@/hooks/useMounted';
@@ -18,6 +19,7 @@ export default function AddStudentPage() {
   const mounted = useMounted();
   const [isActive, setIsActive] = React.useState(true);
   const [loading, setLoading] = React.useState(false);
+  const [showSuccess, setShowSuccess] = React.useState(false);
   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [formData, setFormData] = React.useState({
@@ -74,7 +76,10 @@ export default function AddStudentPage() {
         ]);
       }
 
-      router.push('/admin/students');
+      setShowSuccess(true);
+      setTimeout(() => {
+        router.push('/admin/students');
+      }, 1500);
     } catch (err: any) {
       alert(err.message || 'Erro ao salvar aluno');
     } finally {
@@ -85,6 +90,11 @@ export default function AddStudentPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col">
       <Header title="Adicionar Aluno" />
+      <Toast 
+        message="Aluno cadastrado com sucesso!" 
+        isVisible={showSuccess} 
+        onClose={() => setShowSuccess(false)} 
+      />
 
       <main className="flex-1 overflow-y-auto pb-32">
         <form onSubmit={handleSubmit} className="max-w-md mx-auto">

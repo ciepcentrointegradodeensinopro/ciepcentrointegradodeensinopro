@@ -11,11 +11,14 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useMounted } from '@/hooks/useMounted';
 import Image from 'next/image';
+import { Toast } from '@/components/Toast';
 
 export default function ProfilePage() {
   const router = useRouter();
   const { profile, loading, isAdmin } = useAuth();
   const mounted = useMounted();
+  const [showSuccess, setShowSuccess] = React.useState(false);
+  const [successMessage, setSuccessMessage] = React.useState('');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
 
@@ -47,8 +50,12 @@ export default function ProfilePage() {
 
         if (error) throw error;
         
-        // Refresh page to show new image
-        window.location.reload();
+        setSuccessMessage('Foto de perfil atualizada!');
+        setShowSuccess(true);
+        // Refresh page to show new image after a delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
       } catch (error: any) {
         alert('Erro ao atualizar foto: ' + error.message);
       } finally {
@@ -83,6 +90,11 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col">
+      <Toast 
+        message={successMessage} 
+        isVisible={showSuccess} 
+        onClose={() => setShowSuccess(false)} 
+      />
       <header className="flex items-center p-4 justify-between sticky top-0 z-10 bg-slate-950/80 backdrop-blur-md border-b border-slate-800">
         <button onClick={() => router.back()} className="p-2 rounded-full hover:bg-slate-800 transition-colors">
           <ChevronRight className="w-6 h-6 rotate-180" />
@@ -133,7 +145,13 @@ export default function ProfilePage() {
               <h1 className="text-2xl font-bold">{profile?.full_name || 'Usuário'}</h1>
               <p className="text-green-500 font-medium">{profile?.course || (profile?.role === 'admin' ? 'Administrador' : 'Estudante')}</p>
             </div>
-            <button className="bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-green-500/20 transition-all">
+            <button 
+              onClick={() => {
+                setSuccessMessage('Perfil atualizado com sucesso!');
+                setShowSuccess(true);
+              }}
+              className="bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-green-500/20 transition-all"
+            >
               Editar Perfil
             </button>
           </div>

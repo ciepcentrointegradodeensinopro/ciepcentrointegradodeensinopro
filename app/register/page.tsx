@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useMounted } from '@/hooks/useMounted';
 import Image from 'next/image';
+import { Toast } from '@/components/Toast';
 
 export default function RegisterPage() {
   const { user, loading: authLoading } = useAuth();
@@ -16,6 +17,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = React.useState(false);
   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -100,7 +102,10 @@ export default function RegisterPage() {
 
         if (profileError) throw profileError;
         
-        router.push('/dashboard');
+        setShowSuccess(true);
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1500);
       }
     } catch (err: any) {
       setError(err.message || 'Ocorreu um erro ao cadastrar');
@@ -127,6 +132,11 @@ export default function RegisterPage() {
         animate={{ opacity: 1, x: 0 }}
         className="w-full max-w-md"
       >
+        <Toast 
+          message="Conta criada com sucesso! Redirecionando..." 
+          isVisible={showSuccess} 
+          onClose={() => setShowSuccess(false)} 
+        />
         <div className="mb-8">
           <h1 className="text-3xl font-extrabold text-white mb-2">Cadastre-se</h1>
           <p className="text-slate-400">Preencha os dados abaixo para começar sua jornada acadêmica.</p>
