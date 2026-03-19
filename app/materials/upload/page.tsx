@@ -20,6 +20,11 @@ export default function UploadMaterialPage() {
   const [isVisible, setIsVisible] = React.useState(true);
   const [loading, setLoading] = React.useState(false);
   const [showSuccess, setShowSuccess] = React.useState(false);
+  const [toast, setToast] = React.useState<{ message: string; isVisible: boolean; type: 'success' | 'error' }>({
+    message: '',
+    isVisible: false,
+    type: 'success'
+  });
   const [title, setTitle] = React.useState('');
   const [discipline, setDiscipline] = React.useState('');
   const [category, setCategory] = React.useState('');
@@ -75,7 +80,11 @@ export default function UploadMaterialPage() {
 
   const handlePublish = async () => {
     if (!title || !fileUrl) {
-      alert('Por favor, preencha o título e selecione um arquivo.');
+      setToast({
+        message: 'Por favor, preencha o título e selecione um arquivo.',
+        isVisible: true,
+        type: 'error'
+      });
       return;
     }
 
@@ -102,7 +111,11 @@ export default function UploadMaterialPage() {
       }
 
       console.log('UploadMaterialPage: Success!');
-      setShowSuccess(true);
+      setToast({
+        message: 'Material publicado com sucesso!',
+        isVisible: true,
+        type: 'success'
+      });
       
       // Clear form
       setTitle('');
@@ -117,7 +130,11 @@ export default function UploadMaterialPage() {
       }, 2000);
     } catch (error: any) {
       console.error('UploadMaterialPage: Publish exception', error);
-      alert('Erro ao publicar: ' + (error.message || 'Erro desconhecido'));
+      setToast({
+        message: 'Erro ao publicar: ' + (error.message || 'Erro desconhecido'),
+        isVisible: true,
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -127,9 +144,10 @@ export default function UploadMaterialPage() {
     <div className="min-h-screen bg-slate-950 text-white flex flex-col">
       <Header title="Upload de Materiais" />
       <Toast 
-        message="Material publicado com sucesso!" 
-        isVisible={showSuccess} 
-        onClose={() => setShowSuccess(false)} 
+        message={toast.message} 
+        isVisible={toast.isVisible} 
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))} 
       />
 
       <main className="flex-1 overflow-y-auto p-4 pb-32">

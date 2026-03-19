@@ -10,6 +10,8 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 
+import { Toast } from '@/components/Toast';
+
 export default function UploadBoletoPage() {
   const router = useRouter();
   const { isAdmin, loading: authLoading } = useAuth();
@@ -23,17 +25,50 @@ export default function UploadBoletoPage() {
   const [fileUrl, setFileUrl] = React.useState('');
   const [barcode, setBarcode] = React.useState('');
 
+  const [toast, setToast] = React.useState<{ message: string; isVisible: boolean; type: 'success' | 'error' }>({
+    message: '',
+    isVisible: false,
+    type: 'success'
+  });
+
   React.useEffect(() => {
     const fetchStudents = async () => {
-      const { data } = await supabase
+      console.log('UploadBoletoPage: Fetching students...');
+      
+      // First, let's see if we can fetch ANY profiles to check connection and data
+      const { data: allProfiles, error: allProfilesError } = await supabase
+        .from('profiles')
+        .select('role, full_name, ra');
+      
+      if (allProfilesError) {
+        console.error('UploadBoletoPage: Error fetching all profiles', allProfilesError);
+      } else {
+        console.log('UploadBoletoPage: Total profiles found:', allProfiles?.length || 0);
+        console.log('UploadBoletoPage: Roles found:', [...new Set(allProfiles?.map(p => p.role))]);
+      }
+
+      const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('role', 'student')
         .order('full_name');
+      
+      if (error) {
+        console.error('UploadBoletoPage: Error fetching students', error);
+      } else {
+        console.log('UploadBoletoPage: Students with role=student fetched', data?.length || 0);
+        if (data && data.length > 0) {
+          console.log('UploadBoletoPage: First student:', data[0].full_name, data[0].ra);
+        }
+      }
       setStudents(data || []);
     };
 
-    if (isAdmin) fetchStudents();
+    if (isAdmin) {
+      fetchStudents();
+    } else {
+      console.log('UploadBoletoPage: User is not admin, skipping fetch. isAdmin:', isAdmin);
+    }
   }, [isAdmin]);
 
   const filteredStudents = students.filter(s => 
@@ -43,7 +78,11 @@ export default function UploadBoletoPage() {
 
   const handlePublish = async () => {
     if (!selectedStudent || !amount || !dueDate || !fileUrl) {
-      alert('Por favor, preencha todos os campos obrigatórios.');
+      setToast({
+        message: 'Por favor, preencha todos os campos obrigatórios.',
+        isVisible: true,
+        type: 'error'
+      });
       return;
     }
 
@@ -60,10 +99,22 @@ export default function UploadBoletoPage() {
 
       if (error) throw error;
 
-      alert('Boleto cadastrado com sucesso!');
-      router.push('/finance');
+      setToast({
+        message: 'Boleto cadastrado com sucesso!',
+        isVisible: true,
+        type: 'success'
+      });
+      
+      setTimeout(() => {
+        router.push('/finance');
+      }, 2000);
     } catch (error: any) {
-      alert('Erro ao cadastrar: ' + error.message);
+      console.error('Erro ao cadastrar:', error);
+      setToast({
+        message: 'Erro ao cadastrar: ' + (error.message || 'Erro desconhecido'),
+        isVisible: true,
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -212,6 +263,13 @@ export default function UploadBoletoPage() {
           </button>
         </div>
       </footer>
+
+      <Toast 
+        message={toast.message}
+        isVisible={toast.isVisible}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
     </div>
   );
 }
