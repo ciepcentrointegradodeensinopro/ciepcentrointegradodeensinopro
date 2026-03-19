@@ -3,7 +3,7 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { FileText, Download, ChevronRight, Search, BookOpen, Clock, File, Plus } from 'lucide-react';
+import { FileText, Download, ChevronRight, Search, BookOpen, Clock, File, Plus, PlayCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -37,6 +37,7 @@ export default function MaterialsListPage() {
   const getIcon = (type: string) => {
     switch (type?.toUpperCase()) {
       case 'PDF': return { icon: FileText, color: 'text-red-500', bg: 'bg-red-500/10' };
+      case 'VIDEO': return { icon: PlayCircle, color: 'text-green-500', bg: 'bg-green-500/10' };
       case 'WORD': return { icon: File, color: 'text-blue-500', bg: 'bg-blue-500/10' };
       case 'ZIP': return { icon: BookOpen, color: 'text-slate-500', bg: 'bg-slate-500/10' };
       default: return { icon: FileText, color: 'text-green-500', bg: 'bg-green-500/10' };

@@ -3,7 +3,7 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { FileText, Download, CheckCircle, MessageSquare, Clock, File, PlayCircle } from 'lucide-react';
+import { FileText, Download, CheckCircle, MessageSquare, Clock, File, PlayCircle, Eye, ExternalLink } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -63,6 +63,24 @@ export default function MaterialDetailsPage() {
   }
 
   const isVideo = material.type === 'Video';
+  const isPDF = material.type === 'PDF';
+
+  const getEmbedUrl = (url: string) => {
+    if (!url) return '';
+    // Handle Google Drive links for embedding
+    if (url.includes('drive.google.com')) {
+      if (url.includes('/view')) {
+        return url.replace('/view', '/preview');
+      }
+      if (url.includes('/open?id=')) {
+        return url.replace('/open?id=', '/file/d/') + '/preview';
+      }
+      if (!url.endsWith('/preview')) {
+        return url + (url.endsWith('/') ? 'preview' : '/preview');
+      }
+    }
+    return url;
+  };
 
   const getDisciplineName = (key: string) => {
     const mapping: Record<string, string> = {
@@ -120,26 +138,49 @@ export default function MaterialDetailsPage() {
             </div>
           )}
 
-          {/* File Preview / Link Card */}
-          <div 
-            onClick={() => material.file_url && window.open(material.file_url, '_blank')}
-            className="relative aspect-[3/4] w-full rounded-2xl bg-slate-900 overflow-hidden border-2 border-dashed border-green-500/20 group cursor-pointer hover:border-green-500 transition-all"
-          >
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-              <div className="size-24 rounded-2xl bg-green-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                {isVideo ? (
-                  <PlayCircle className="w-12 h-12 text-green-500" />
-                ) : (
-                  <FileText className="w-12 h-12 text-green-500" />
-                )}
+          {/* PDF Viewer / Video Preview / Link Card */}
+          {isPDF && material.file_url ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                  <Eye className="w-4 h-4" /> Visualização do PDF
+                </h3>
+                <button 
+                  onClick={() => window.open(material.file_url, '_blank')}
+                  className="text-[10px] font-bold text-green-500 uppercase hover:underline flex items-center gap-1"
+                >
+                  <ExternalLink className="w-3 h-3" /> Abrir em nova aba
+                </button>
               </div>
-              <p className="text-lg font-bold mb-1 truncate w-full px-4">{material.title}</p>
-              <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">
-                {isVideo ? 'Clique para assistir no Drive' : 'Clique para abrir o arquivo'}
-              </p>
+              <div className="relative aspect-[3/4] w-full rounded-2xl bg-slate-900 overflow-hidden border border-slate-800 shadow-2xl">
+                <iframe 
+                  src={getEmbedUrl(material.file_url)} 
+                  className="w-full h-full border-none"
+                  allow="autoplay"
+                ></iframe>
+              </div>
             </div>
-            <div className="absolute inset-0 opacity-5 pointer-events-none bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-green-500 via-transparent to-transparent"></div>
-          </div>
+          ) : (
+            <div 
+              onClick={() => material.file_url && window.open(material.file_url, '_blank')}
+              className="relative aspect-[3/4] w-full rounded-2xl bg-slate-900 overflow-hidden border-2 border-dashed border-green-500/20 group cursor-pointer hover:border-green-500 transition-all"
+            >
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
+                <div className="size-24 rounded-2xl bg-green-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  {isVideo ? (
+                    <PlayCircle className="w-12 h-12 text-green-500" />
+                  ) : (
+                    <FileText className="w-12 h-12 text-green-500" />
+                  )}
+                </div>
+                <p className="text-lg font-bold mb-1 truncate w-full px-4">{material.title}</p>
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">
+                  {isVideo ? 'Clique para assistir no Drive' : 'Clique para abrir o arquivo'}
+                </p>
+              </div>
+              <div className="absolute inset-0 opacity-5 pointer-events-none bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-green-500 via-transparent to-transparent"></div>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex flex-col gap-3">
