@@ -23,54 +23,74 @@ export default function Dashboard() {
   const router = useRouter();
 
   const fetchData = React.useCallback(async () => {
+    console.log('Dashboard: fetchData called', { profileId: profile?.id });
+    if (!profile) {
+      console.log('Dashboard: No profile, stopping fetch');
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
 
-    if (profile?.role === 'admin') {
-      // Fetch admin stats
-      const { count: studentCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student');
-      const { count: materialCount } = await supabase.from('materials').select('*', { count: 'exact', head: true });
-      const { count: pendingPayments } = await supabase.from('payments').select('*', { count: 'exact', head: true }).eq('status', 'pending');
+    try {
+      console.log('Dashboard: Fetching data for role', profile.role);
+      if (profile?.role === 'admin') {
+        // Fetch admin stats
+        const { count: studentCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student');
+        const { count: materialCount } = await supabase.from('materials').select('*', { count: 'exact', head: true });
+        const { count: pendingPayments } = await supabase.from('payments').select('*', { count: 'exact', head: true }).eq('status', 'pending');
 
-      setStats([
-        { label: 'TOTAL DE ALUNOS', value: studentCount || 0, trend: '+5.2%', icon: Users, color: 'text-green-500', bg: 'bg-green-500/10' },
-        { label: 'MATERIAIS DISPONÍVEIS', value: materialCount || 0, trend: '+12%', icon: FileText, iconColor: 'text-green-500', bg: 'bg-green-500/10' },
-        { label: 'PAGAMENTOS PENDENTES', value: pendingPayments || 0, trend: '-8%', icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-500/10' },
-      ]);
+        setStats([
+          { label: 'TOTAL DE ALUNOS', value: studentCount || 0, trend: '+5.2%', icon: Users, color: 'text-green-500', bg: 'bg-green-500/10' },
+          { label: 'MATERIAIS DISPONÍVEIS', value: materialCount || 0, trend: '+12%', icon: FileText, iconColor: 'text-green-500', bg: 'bg-green-500/10' },
+          { label: 'PAGAMENTOS PENDENTES', value: pendingPayments || 0, trend: '-8%', icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-500/10' },
+        ]);
 
-      const { data: activitiesData } = await supabase
-        .from('activities')
-        .select('*, profiles(full_name)')
-        .order('created_at', { ascending: false })
-        .limit(5);
-      
-      setActivities(activitiesData || []);
-    } else {
-      // Fetch student stats
-      const { count: materialCount } = await supabase.from('materials').select('*', { count: 'exact', head: true });
-      const { count: myPendingPayments } = await supabase.from('payments').select('*', { count: 'exact', head: true }).eq('student_id', profile?.id).eq('status', 'pending');
+        const { data: activitiesData } = await supabase
+          .from('activities')
+          .select('*, profiles(full_name)')
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        setActivities(activitiesData || []);
+      } else {
+        // Fetch student stats
+        const { count: materialCount } = await supabase.from('materials').select('*', { count: 'exact', head: true });
+        const { count: myPendingPayments } = await supabase.from('payments').select('*', { count: 'exact', head: true }).eq('student_id', profile?.id).eq('status', 'pending');
 
-      setStats([
-        { label: 'MEUS CURSOS', value: 1, trend: 'Ativo', icon: BookOpen, color: 'text-green-500', bg: 'bg-green-500/10' },
-        { label: 'MATERIAIS DISPONÍVEIS', value: materialCount || 0, trend: 'Novos', icon: FileText, iconColor: 'text-green-500', bg: 'bg-green-500/10' },
-        { label: 'MENSALIDADES EM ABERTO', value: myPendingPayments || 0, trend: 'Pendente', icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-500/10' },
-      ]);
+        setStats([
+          { label: 'MEUS CURSOS', value: 1, trend: 'Ativo', icon: BookOpen, color: 'text-green-500', bg: 'bg-green-500/10' },
+          { label: 'MATERIAIS DISPONÍVEIS', value: materialCount || 0, trend: 'Novos', icon: FileText, iconColor: 'text-green-500', bg: 'bg-green-500/10' },
+          { label: 'MENSALIDADES EM ABERTO', value: myPendingPayments || 0, trend: 'Pendente', icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-500/10' },
+        ]);
 
-      const { data: myActivities } = await supabase
-        .from('activities')
-        .select('*')
-        .eq('student_id', profile?.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
-      
-      setActivities(myActivities || []);
+        const { data: myActivities } = await supabase
+          .from('activities')
+          .select('*')
+          .eq('student_id', profile?.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        setActivities(myActivities || []);
+      }
+      console.log('Dashboard: Data fetched successfully');
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+    } finally {
+      console.log('Dashboard: Setting loading to false');
+      setLoading(false);
     }
-
-    setLoading(false);
   }, [profile]);
 
   React.useEffect(() => {
-    if (!authLoading && profile) {
-      fetchData();
+    console.log('Dashboard: useEffect triggered', { authLoading, hasProfile: !!profile });
+    if (!authLoading) {
+      if (profile) {
+        fetchData();
+      } else {
+        console.log('Dashboard: authLoading false but no profile, setting loading false');
+        setLoading(false);
+      }
     }
   }, [authLoading, profile, fetchData]);
 

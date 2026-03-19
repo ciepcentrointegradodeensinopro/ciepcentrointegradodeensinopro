@@ -27,46 +27,75 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!isSupabaseConfigured) {
+    console.log('AuthProvider: Initializing...', { isSupabaseConfigured });
+    
+    // Safety timeout to prevent infinite loading if Supabase hangs
+    const timeout = setTimeout(() => {
+      console.log('AuthProvider: Safety timeout reached');
       setLoading(false);
+    }, 5000);
+
+    if (!isSupabaseConfigured) {
+      console.log('AuthProvider: Supabase not configured');
+      setLoading(false);
+      clearTimeout(timeout);
       return;
     }
 
     const getSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log('AuthProvider: Fetching session...');
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Session fetch error:', sessionError);
+          setLoading(false);
+          return;
+        }
+
+        console.log('AuthProvider: Session fetched', { hasUser: !!session?.user });
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Try to fetch profile, retry once if not found (for new users)
-          let { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .single();
-          
-          if (error && session.user) {
-            // Wait a bit and try again
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            const { data: retryData } = await supabase
+          try {
+            console.log('AuthProvider: Fetching profile for user', session.user.id);
+            // Try to fetch profile
+            let { data, error } = await supabase
               .from('profiles')
               .select('*')
               .eq('user_id', session.user.id)
               .single();
-            data = retryData;
+            
+            if (error && session.user) {
+              console.log('AuthProvider: Profile not found, retrying...');
+              // Wait a bit and try again (for new users where profile might be created by trigger)
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              const { data: retryData } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('user_id', session.user.id)
+                .single();
+              data = retryData;
+            }
+            console.log('AuthProvider: Profile fetched', { hasProfile: !!data });
+            setProfile(data);
+          } catch (profileErr) {
+            console.error('Profile fetch error in getSession:', profileErr);
           }
-          setProfile(data);
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
       } finally {
+        console.log('AuthProvider: Initialization complete');
         setLoading(false);
+        clearTimeout(timeout);
       }
     };
 
     getSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('AuthProvider: Auth state changed', { event, hasUser: !!session?.user });
       setUser(session?.user ?? null);
       if (session?.user) {
         try {
@@ -77,15 +106,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             .single();
           setProfile(data);
         } catch (error) {
-          console.error('Profile fetch error:', error);
+          console.error('Profile fetch error in onAuthStateChange:', error);
         }
       } else {
         setProfile(null);
       }
       setLoading(false);
+      clearTimeout(timeout);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, []);
 
   // Basic route protection
