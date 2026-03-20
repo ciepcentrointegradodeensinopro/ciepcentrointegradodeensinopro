@@ -7,14 +7,14 @@ import { Home, BookOpen, BarChart2, User, BadgeCheck, LayoutDashboard, Users, Se
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { icon: Home, label: 'Início', href: '/dashboard' },
+  { icon: Home, label: 'Meu Login', href: '/dashboard' },
   { icon: BookOpen, label: 'Cursos', href: '/materials' },
   { icon: BadgeCheck, label: 'Carteira', href: '/id-card' },
   { icon: User, label: 'Perfil', href: '/profile' },
 ];
 
 const adminNavItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
+  { icon: LayoutDashboard, label: 'Meu Login', href: '/dashboard' },
   { icon: Users, label: 'Alunos', href: '/admin/students' },
   { icon: BookOpen, label: 'Cursos', href: '/materials' },
   { icon: Settings, label: 'Ajustes', href: '/admin/settings' },

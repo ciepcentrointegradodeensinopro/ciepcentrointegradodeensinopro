@@ -160,7 +160,7 @@ export default function Dashboard() {
 
       <main className="px-6 space-y-8">
         <div>
-          <h1 className="text-3xl font-bold">Olá, {profile?.full_name?.split(' ')[0] || 'Usuário'}</h1>
+          <h1 className="text-3xl font-bold">Olá, {profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário'}</h1>
           <p className="text-slate-400 mt-1">
             {isAdmin ? 'Bem-vindo ao seu painel de controle escolar.' : 'Bem-vindo ao seu portal do aluno.'}
           </p>
@@ -235,7 +235,11 @@ export default function Dashboard() {
                     <User className="w-5 h-5 text-slate-500" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold">{isAdmin ? item.profiles?.full_name : profile?.full_name}</p>
+                    <p className="text-sm font-bold">
+                      {isAdmin 
+                        ? (item.profiles?.full_name || 'Usuário') 
+                        : (profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Você')}
+                    </p>
                     <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">{item.action}</p>
                   </div>
                 </div>

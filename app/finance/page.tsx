@@ -37,7 +37,7 @@ export default function FinancePage() {
       setTotalOpen(open);
     }
     setLoading(false);
-  }, [profile]);
+  }, [profile, isAdmin]);
 
   React.useEffect(() => {
     if (!authLoading && profile) {

@@ -102,7 +102,7 @@ export default function RegisterPage() {
         
         setShowSuccess(true);
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push('/register/success');
         }, 1500);
       }
     } catch (err: any) {
