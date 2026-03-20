@@ -100,7 +100,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         // Auto-upgrade admin role if email matches
-        if (userEmail === 'ciepcentrointegradodeensinopro@gmail.com' && data.role !== 'admin') {
+        const adminEmails = ['ciepcentrointegradodeensinopro@gmail.com', 'test@gmail.com'];
+        if (userEmail && adminEmails.includes(userEmail) && data.role !== 'admin') {
           console.log('AuthProvider: Auto-upgrading admin role in database');
           const { data: updatedData, error: updateError } = await supabase
             .from('profiles')
@@ -195,7 +196,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [user, loading, pathname, router]);
 
-  const isAdmin = profile?.role === 'admin' || user?.email === 'ciepcentrointegradodeensinopro@gmail.com';
+  const adminEmails = ['ciepcentrointegradodeensinopro@gmail.com', 'test@gmail.com'];
+  const isAdmin = profile?.role === 'admin' || (user?.email && adminEmails.includes(user.email));
 
   if (!isSupabaseConfigured) {
     return (
