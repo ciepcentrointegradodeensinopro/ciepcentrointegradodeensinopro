@@ -25,7 +25,6 @@ export default function AddStudentPage() {
   const [formData, setFormData] = React.useState({
     fullName: '',
     email: '',
-    ra: '',
     course: '',
   });
 
@@ -56,7 +55,6 @@ export default function AddStudentPage() {
           {
             full_name: formData.fullName,
             email: formData.email,
-            ra: formData.ra,
             course: formData.course,
             status: isActive ? 'active' : 'inactive',
             role: 'student',
@@ -169,38 +167,25 @@ export default function AddStudentPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-slate-400 text-sm font-semibold px-1">RA (Matrícula)</label>
-                <input 
-                  type="text"
-                  required
-                  value={formData.ra}
-                  onChange={(e) => setFormData({ ...formData, ra: e.target.value })}
-                  placeholder="000.000"
-                  className="w-full px-4 h-14 rounded-xl border border-slate-800 bg-slate-900 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-slate-400 text-sm font-semibold px-1">Status</label>
-                <div className="flex items-center h-14 px-4 bg-slate-900 rounded-xl border border-slate-800 justify-between">
-                  <span className="text-sm text-slate-400">{isActive ? 'Ativo' : 'Inativo'}</span>
-                  <button 
-                    type="button"
-                    onClick={() => setIsActive(!isActive)}
+            <div className="space-y-2">
+              <label className="text-slate-400 text-sm font-semibold px-1">Status</label>
+              <div className="flex items-center h-14 px-4 bg-slate-900 rounded-xl border border-slate-800 justify-between">
+                <span className="text-sm text-slate-400">{isActive ? 'Ativo' : 'Inativo'}</span>
+                <button 
+                  type="button"
+                  onClick={() => setIsActive(!isActive)}
+                  className={cn(
+                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
+                    isActive ? "bg-green-500" : "bg-slate-700"
+                  )}
+                >
+                  <span 
                     className={cn(
-                      "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
-                      isActive ? "bg-green-500" : "bg-slate-700"
+                      "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                      isActive ? "translate-x-6" : "translate-x-1"
                     )}
-                  >
-                    <span 
-                      className={cn(
-                        "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                        isActive ? "translate-x-6" : "translate-x-1"
-                      )}
-                    />
-                  </button>
-                </div>
+                  />
+                </button>
               </div>
             </div>
 

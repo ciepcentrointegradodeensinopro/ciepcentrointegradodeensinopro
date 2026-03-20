@@ -78,7 +78,6 @@ export default function LoginPage() {
         {/* Welcome Text */}
         <div className="px-6 pt-8 pb-2 text-center">
           <h1 className="text-white text-3xl font-bold">Bem-vindo ao AVA</h1>
-          <p className="text-slate-400 mt-2">Entre para acessar seus materiais de apoio</p>
         </div>
 
         {error && (

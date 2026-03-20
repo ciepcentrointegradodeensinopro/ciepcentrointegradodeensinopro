@@ -25,7 +25,6 @@ export default function RegisterPage() {
   const [formData, setFormData] = React.useState({
     fullName: '',
     email: '',
-    ra: '',
     course: '',
     password: '',
     confirmPassword: '',
@@ -93,7 +92,6 @@ export default function RegisterPage() {
               user_id: authData.user.id,
               full_name: formData.fullName,
               email: formData.email,
-              ra: formData.ra,
               course: formData.course,
               role: 'student',
               avatar_url: avatarUrl,
@@ -210,32 +208,19 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-300 ml-1">Matrícula (RA)</label>
-              <input 
-                type="text"
-                required
-                value={formData.ra}
-                onChange={(e) => setFormData({ ...formData, ra: e.target.value })}
-                placeholder="0000000"
-                className="w-full px-4 py-3.5 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-white placeholder:text-slate-500 outline-none"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-300 ml-1">Curso</label>
-              <select 
-                required
-                value={formData.course}
-                onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-                className="w-full px-4 py-3.5 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-white outline-none appearance-none"
-              >
-                <option value="">Selecione</option>
-                <option value="Mecânica de Motos">Mecânica de Motos</option>
-                <option value="Mecânica Automotiva">Mecânica Automotiva</option>
-                <option value="Mecânica Elétrica">Mecânica Elétrica</option>
-              </select>
-            </div>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-slate-300 ml-1">Curso</label>
+            <select 
+              required
+              value={formData.course}
+              onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+              className="w-full px-4 py-3.5 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-white outline-none appearance-none"
+            >
+              <option value="">Selecione</option>
+              <option value="Mecânica de Motos">Mecânica de Motos</option>
+              <option value="Mecânica Automotiva">Mecânica Automotiva</option>
+              <option value="Mecânica Elétrica">Mecânica Elétrica</option>
+            </select>
           </div>
 
           <div className="space-y-2">
