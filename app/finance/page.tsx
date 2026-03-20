@@ -23,7 +23,7 @@ export default function FinancePage() {
   const fetchData = React.useCallback(async () => {
     let query = supabase.from('payments').select('*, profiles(full_name, ra)');
     
-    if (profile.role !== 'admin') {
+    if (!isAdmin) {
       query = query.eq('student_id', profile.id);
     }
 

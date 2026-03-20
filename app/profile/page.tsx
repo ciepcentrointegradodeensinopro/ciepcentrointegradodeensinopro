@@ -143,7 +143,7 @@ export default function ProfilePage() {
             </div>
             <div className="text-center">
               <h1 className="text-2xl font-bold">{profile?.full_name || 'Usuário'}</h1>
-              <p className="text-green-500 font-medium">{profile?.course || (profile?.role === 'admin' ? 'Administrador' : 'Estudante')}</p>
+              <p className="text-green-500 font-medium">{profile?.course || (isAdmin ? 'Administrador' : 'Estudante')}</p>
             </div>
             <button 
               onClick={() => {
