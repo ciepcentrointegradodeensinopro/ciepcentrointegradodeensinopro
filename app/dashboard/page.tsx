@@ -15,7 +15,7 @@ import { useMounted } from '@/hooks/useMounted';
 import Image from 'next/image';
 
 export default function Dashboard() {
-  const { profile, loading: authLoading, isAdmin } = useAuth();
+  const { user, profile, loading: authLoading, isAdmin } = useAuth();
   const mounted = useMounted();
   const [loading, setLoading] = React.useState(true);
   const [stats, setStats] = React.useState<any[]>([]);
@@ -112,7 +112,7 @@ export default function Dashboard() {
   }
 
   const quickAccess = isAdmin ? [
-    { label: 'Gerenciar Alunos', sub: 'Cadastros e matrículas', icon: Users, href: '/admin/students', color: 'bg-green-500' },
+    { label: 'Gerenciar Usuários', sub: 'Cadastros e matrículas', icon: Users, href: '/admin/students', color: 'bg-green-500' },
     { label: 'Upload de Materiais', sub: 'Arquivos e vídeos', icon: Upload, href: '/materials', color: 'bg-green-500' },
     { label: 'Controle Financeiro', sub: 'Mensalidades', icon: DollarSign, href: '/finance', color: 'bg-green-500' },
     { label: 'Configurações', sub: 'Ajustes do sistema', icon: Settings, href: '/admin/settings', color: 'bg-green-500' },

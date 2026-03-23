@@ -3,7 +3,7 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { FileText, Download, ChevronRight, Search, BookOpen, Clock, File, Plus, PlayCircle } from 'lucide-react';
+import { FileText, Download, ChevronRight, Search, BookOpen, Clock, File, Plus, PlayCircle, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -110,19 +110,36 @@ export default function MaterialsListPage() {
                           <p className="text-xs text-slate-500">{item.type} • {mounted ? new Date(item.created_at).toLocaleDateString('pt-BR') : ''}</p>
                         </div>
                       </Link>
-                      <button 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (item.file_url) {
-                            window.open(item.file_url, '_blank');
-                          } else {
-                            alert('Link não disponível para este material.');
-                          }
-                        }}
-                        className="bg-green-600 hover:bg-green-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all active:scale-95"
-                      >
-                        Baixar
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {isAdmin && (
+                          <button 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (confirm('Deseja excluir este material?')) {
+                                supabase.from('materials').delete().eq('id', item.id).then(({ error }) => {
+                                  if (!error) setMaterials(materials.filter(m => m.id !== item.id));
+                                });
+                              }
+                            }}
+                            className="p-2 text-slate-500 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        )}
+                        <button 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (item.file_url) {
+                              window.open(item.file_url, '_blank');
+                            } else {
+                              alert('Link não disponível para este material.');
+                            }
+                          }}
+                          className="bg-green-600 hover:bg-green-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all active:scale-95"
+                        >
+                          Baixar
+                        </button>
+                      </div>
                     </motion.div>
                   );
                 })}

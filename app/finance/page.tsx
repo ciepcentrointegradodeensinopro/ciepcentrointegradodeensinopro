@@ -3,7 +3,7 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { DollarSign, FileText, Copy, CheckCircle, Clock, Filter, ChevronRight, Plus } from 'lucide-react';
+import { DollarSign, FileText, Copy, CheckCircle, Clock, Filter, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
@@ -118,6 +118,21 @@ export default function FinancePage() {
                     <div className="flex items-center justify-between">
                       <span className="text-xl font-bold">R$ {Number(bill.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                       <div className="flex gap-2">
+                        {isAdmin && (
+                          <button 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (confirm('Deseja excluir este registro financeiro?')) {
+                                supabase.from('payments').delete().eq('id', bill.id).then(({ error }) => {
+                                  if (!error) setPayments(payments.filter(p => p.id !== bill.id));
+                                });
+                              }
+                            }}
+                            className="p-2 text-slate-500 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        )}
                         {bill.status === 'pending' ? (
                           <>
                             <button 

@@ -19,6 +19,30 @@ export default function UploadMaterialPage() {
   const router = useRouter();
   const [isVisible, setIsVisible] = React.useState(true);
   const [loading, setLoading] = React.useState(false);
+  const [disciplines, setDisciplines] = React.useState<any[]>([]);
+  const [loadingDisciplines, setLoadingDisciplines] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchDisciplines = async () => {
+      const { data, error } = await supabase
+        .from('disciplines')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (!error && data && data.length > 0) {
+        setDisciplines(data);
+      } else {
+        // Fallback
+        setDisciplines([
+          { slug: 'motos', name: 'Mecânica de Motos' },
+          { slug: 'auto', name: 'Mecânica Automotiva' },
+          { slug: 'eletrica', name: 'Mecânica Elétrica' },
+        ]);
+      }
+      setLoadingDisciplines(false);
+    };
+    fetchDisciplines();
+  }, []);
   const [showSuccess, setShowSuccess] = React.useState(false);
   const [toast, setToast] = React.useState<{ message: string; isVisible: boolean; type: 'success' | 'error' }>({
     message: '',
@@ -226,9 +250,9 @@ export default function UploadMaterialPage() {
                   className="w-full appearance-none rounded-xl border border-slate-800 bg-slate-900 h-14 px-4 focus:ring-2 focus:ring-green-500 outline-none transition-all"
                 >
                   <option value="">Selecione a disciplina</option>
-                  <option value="motos">Mecânica de Motos</option>
-                  <option value="auto">Mecânica Automotiva</option>
-                  <option value="eletrica">Mecânica Elétrica</option>
+                  {disciplines.map(d => (
+                    <option key={d.slug} value={d.slug}>{d.name}</option>
+                  ))}
                 </select>
               </div>
               <div className="space-y-2">
