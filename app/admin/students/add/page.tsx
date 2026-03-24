@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { Header } from '@/components/Header';
-import { User, Mail, Hash, School, Save, X, Camera, Edit3, CheckCircle2 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { User, Mail, Hash, School, Save, X, Camera, Edit3, CheckCircle2, Lock, Eye, EyeOff } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
@@ -20,7 +20,9 @@ export default function AddStudentPage() {
   const [isActive, setIsActive] = React.useState(true);
   const [isAdminRole, setIsAdminRole] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
+  const [configReady, setConfigReady] = React.useState<boolean | null>(null);
   const [showSuccess, setShowSuccess] = React.useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
   const [toast, setToast] = React.useState<{ message: string; isVisible: boolean; type: 'success' | 'error' }>({
     message: '',
     isVisible: false,
@@ -28,9 +30,25 @@ export default function AddStudentPage() {
   });
   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    const checkConfig = async () => {
+      try {
+        const res = await fetch('/api/admin/check-config');
+        const data = await res.json();
+        setConfigReady(data.configured);
+      } catch (e) {
+        console.error('Erro ao verificar configuração:', e);
+        setConfigReady(false);
+      }
+    };
+    checkConfig();
+  }, []);
+
   const [formData, setFormData] = React.useState({
     fullName: '',
     email: '',
+    password: '',
     course: '',
   });
 
@@ -55,20 +73,35 @@ export default function AddStudentPage() {
     setLoading(true);
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            full_name: formData.fullName,
-            email: formData.email,
-            course: isAdminRole ? '' : formData.course,
-            status: isActive ? 'active' : 'inactive',
-            role: isAdminRole ? 'admin' : 'student',
-            avatar_url: avatarUrl,
-          },
-        ]);
+      // Call the API route to create the user in Supabase Auth and update the profile
+      const response = await fetch('/api/admin/create-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          fullName: formData.fullName,
+          role: isAdminRole ? 'admin' : 'student',
+          course: isAdminRole ? '' : formData.course,
+          status: isActive ? 'active' : 'inactive',
+          avatarUrl: avatarUrl,
+        }),
+      });
 
-      if (error) throw error;
+      let result;
+      try {
+        result = await response.json();
+      } catch (e) {
+        const text = await response.text();
+        console.error('Resposta não-JSON recebida:', text);
+        throw new Error('O servidor retornou uma resposta inválida. Verifique se a rota da API está configurada corretamente.');
+      }
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erro ao criar usuário');
+      }
 
       // Log activity
       if (profile) {
@@ -95,6 +128,20 @@ export default function AddStudentPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col">
       <Header title="Novo Usuário" />
+      
+      {configReady === false && (
+        <div className="mx-4 mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-xl flex flex-col gap-2">
+          <div className="flex items-center gap-2 text-red-500 font-bold">
+            <Lock className="w-5 h-5" />
+            <span>Configuração Necessária</span>
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            A chave <code className="bg-slate-900 px-1 rounded text-red-400">SUPABASE_SERVICE_ROLE_KEY</code> não foi encontrada. 
+            Você precisa configurá-la nas <strong>Settings</strong> do AI Studio para permitir a criação de usuários com senha.
+          </p>
+        </div>
+      )}
+
       <Toast 
         message={toast.message} 
         isVisible={toast.isVisible} 
@@ -204,6 +251,30 @@ export default function AddStudentPage() {
               </div>
             </div>
 
+            <div className="space-y-2">
+              <label className="text-slate-400 text-sm font-semibold px-1">Senha de Acesso</label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+                <input 
+                  type={showPassword ? "text" : "password"}
+                  required
+                  minLength={6}
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="Crie uma senha segura"
+                  className="w-full pl-12 pr-12 h-14 rounded-xl border border-slate-800 bg-slate-900 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider px-1">Mínimo de 6 caracteres</p>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-slate-400 text-sm font-semibold px-1">Status</label>
@@ -275,8 +346,8 @@ export default function AddStudentPage() {
             <div className="max-w-md mx-auto w-full flex flex-col gap-3">
               <button 
                 type="submit"
-                disabled={loading}
-                className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                disabled={loading || configReady === false}
+                className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save className="w-5 h-5" />
                 {loading ? 'Salvando...' : 'Salvar Usuário'}

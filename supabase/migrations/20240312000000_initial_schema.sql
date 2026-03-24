@@ -20,6 +20,13 @@ CREATE TABLE disciplines (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
+-- Insert default disciplines
+INSERT INTO disciplines (name, slug) VALUES 
+  ('Mecânica de Motos', 'motos'),
+  ('Mecânica Automotiva', 'auto'),
+  ('Mecânica Elétrica', 'eletrica')
+ON CONFLICT (slug) DO NOTHING;
+
 -- Create materials table
 CREATE TABLE materials (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { CheckCircle, ArrowRight, Home, User } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useMounted } from '@/hooks/useMounted';

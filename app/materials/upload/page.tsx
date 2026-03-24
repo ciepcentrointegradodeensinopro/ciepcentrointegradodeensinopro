@@ -3,8 +3,8 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { CloudUpload, FileText, BookOpen, Layers, Eye, Send, ExternalLink, Link as LinkIcon } from 'lucide-react';
-import { motion } from 'motion/react';
+import { CloudUpload, FileText, BookOpen, Layers, Eye, Send, ExternalLink, Link as LinkIcon, Upload, X as CloseIcon } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
@@ -55,6 +55,8 @@ export default function UploadMaterialPage() {
   const [description, setDescription] = React.useState('');
   const [fileUrl, setFileUrl] = React.useState('');
   const [fileName, setFileName] = React.useState('');
+  const [uploadProgress, setUploadProgress] = React.useState(0);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Google Picker Logic
   const handleGoogleDrive = () => {
@@ -102,6 +104,52 @@ export default function UploadMaterialPage() {
     document.body.appendChild(script);
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLoading(true);
+    setUploadProgress(10);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      setUploadProgress(30);
+      const { data, error } = await supabase.storage
+        .from('materials')
+        .upload(filePath, file);
+
+      if (error) throw error;
+
+      setUploadProgress(70);
+      const { data: { publicUrl } } = supabase.storage
+        .from('materials')
+        .getPublicUrl(filePath);
+
+      setFileUrl(publicUrl);
+      setFileName(file.name);
+      if (!title) setTitle(file.name.split('.')[0]);
+      
+      setUploadProgress(100);
+      setToast({
+        message: 'Arquivo carregado com sucesso!',
+        isVisible: true,
+        type: 'success'
+      });
+    } catch (error: any) {
+      console.error('Error uploading file:', error);
+      setToast({
+        message: 'Erro ao carregar arquivo: ' + error.message,
+        isVisible: true,
+        type: 'error'
+      });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setUploadProgress(0), 1000);
+    }
+  };
+
   const handlePublish = async () => {
     if (!title || !fileUrl) {
       setToast({
@@ -135,6 +183,7 @@ export default function UploadMaterialPage() {
       }
 
       console.log('UploadMaterialPage: Success!');
+      setShowSuccess(true);
       setToast({
         message: 'Material publicado com sucesso!',
         isVisible: true,
@@ -174,7 +223,7 @@ export default function UploadMaterialPage() {
         onClose={() => setToast(prev => ({ ...prev, isVisible: false }))} 
       />
 
-      {toast.isVisible && toast.type === 'success' && (
+      {showSuccess && (
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -206,21 +255,57 @@ export default function UploadMaterialPage() {
       <main className="flex-1 overflow-y-auto p-4 pb-32">
         <div className="max-w-md mx-auto space-y-6">
           {/* Upload Area */}
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-2 gap-4">
+            <input 
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              className="hidden"
+            />
             <div 
-              onClick={handleGoogleDrive}
+              onClick={() => fileInputRef.current?.click()}
               className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-green-500/40 bg-green-500/5 hover:bg-green-500/10 transition-colors px-6 py-8 cursor-pointer group"
             >
               <div className="size-12 bg-green-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                <ExternalLink className="w-6 h-6 text-green-500" />
+                <Upload className="w-6 h-6 text-green-500" />
               </div>
               <div className="text-center">
-                <p className="text-sm font-bold text-green-500">Google Drive (Automático)</p>
-                <p className="text-[10px] text-green-500/60">Abrir seletor do Google</p>
+                <p className="text-sm font-bold text-green-500">Upload Direto</p>
+                <p className="text-[10px] text-green-500/60">Do seu computador</p>
               </div>
             </div>
 
-            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 space-y-3">
+            <div 
+              onClick={handleGoogleDrive}
+              className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-blue-500/40 bg-blue-500/5 hover:bg-blue-500/10 transition-colors px-6 py-8 cursor-pointer group"
+            >
+              <div className="size-12 bg-blue-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                <ExternalLink className="w-6 h-6 text-blue-500" />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-bold text-blue-500">Google Drive</p>
+                <p className="text-[10px] text-blue-500/60">Abrir seletor</p>
+              </div>
+            </div>
+          </div>
+
+          {uploadProgress > 0 && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <span>Carregando arquivo...</span>
+                <span>{uploadProgress}%</span>
+              </div>
+              <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${uploadProgress}%` }}
+                  className="bg-green-500 h-full"
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 space-y-3">
               <div className="flex items-center gap-2 text-slate-400">
                 <LinkIcon className="w-4 h-4" />
                 <span className="text-xs font-bold uppercase tracking-wider">Ou cole o link manual</span>
@@ -244,7 +329,6 @@ export default function UploadMaterialPage() {
               </div>
               <p className="text-[10px] text-slate-500">Certifique-se de que o link esteja configurado como &quot;Qualquer pessoa com o link pode ler&quot; no Google Drive.</p>
             </div>
-          </div>
 
           {fileName && (
             <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-xl flex items-center gap-3">
