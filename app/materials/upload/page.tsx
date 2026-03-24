@@ -174,6 +174,35 @@ export default function UploadMaterialPage() {
         onClose={() => setToast(prev => ({ ...prev, isVisible: false }))} 
       />
 
+      {toast.isVisible && toast.type === 'success' && (
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-6"
+        >
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-slate-900 border border-slate-800 p-8 rounded-3xl w-full max-w-xs text-center shadow-2xl shadow-green-500/10"
+          >
+            <div className="size-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <BookOpen className="w-10 h-10 text-green-500" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Sucesso!</h2>
+            <p className="text-slate-400 text-sm mb-6">O material foi publicado corretamente no sistema.</p>
+            <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 2, ease: "linear" }}
+                className="bg-green-500 h-full"
+              />
+            </div>
+            <p className="text-[10px] text-slate-500 mt-2 uppercase tracking-widest font-bold">Redirecionando...</p>
+          </motion.div>
+        </motion.div>
+      )}
+
       <main className="flex-1 overflow-y-auto p-4 pb-32">
         <div className="max-w-md mx-auto space-y-6">
           {/* Upload Area */}

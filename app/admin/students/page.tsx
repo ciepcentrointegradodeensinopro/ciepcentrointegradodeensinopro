@@ -8,6 +8,7 @@ import { motion } from 'motion/react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
+import { Toast } from '@/components/Toast';
 
 import { useAuth } from '@/components/AuthProvider';
 import { useMounted } from '@/hooks/useMounted';
@@ -24,6 +25,11 @@ function StudentsContent() {
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState('');
   const [filter, setFilter] = React.useState(searchParams.get('filter') || 'Todos');
+  const [toast, setToast] = React.useState<{ message: string; isVisible: boolean; type: 'success' | 'error' }>({
+    message: '',
+    isVisible: false,
+    type: 'success'
+  });
 
   const fetchUsers = React.useCallback(async () => {
     setLoading(true);
@@ -62,8 +68,9 @@ function StudentsContent() {
     if (confirm('Tem certeza que deseja excluir este usuário?')) {
       const { error } = await supabase.from('profiles').delete().eq('id', id);
       if (error) {
-        alert('Erro ao excluir usuário');
+        setToast({ message: 'Erro ao excluir usuário', isVisible: true, type: 'error' });
       } else {
+        setToast({ message: 'Usuário excluído com sucesso!', isVisible: true, type: 'success' });
         setUsers(users.filter(u => u.id !== id));
       }
     }
@@ -73,20 +80,25 @@ function StudentsContent() {
     const isSelf = currentUser?.id === users.find(u => u.id === id)?.user_id;
     
     if (isSelf) {
-      alert('Você não pode alterar seu próprio cargo para evitar perda de acesso.');
+      setToast({ message: 'Você não pode alterar seu próprio cargo.', isVisible: true, type: 'error' });
       return;
     }
 
     const newRole = currentRole === 'admin' ? 'student' : 'admin';
     if (confirm(`Deseja alterar o cargo para ${newRole === 'admin' ? 'Administrador' : 'Aluno'}?`)) {
-      console.log(`StudentsPage: Changing role for ${id} from ${currentRole} to ${newRole}`);
-      const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', id);
+      console.log(`StudentsPage: Changing role for profile ID ${id} from ${currentRole} to ${newRole}`);
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', id)
+        .select();
       
       if (error) {
         console.error('StudentsPage: Error updating role', error);
-        alert(`Erro ao alterar cargo: ${error.message}`);
+        setToast({ message: `Erro ao alterar cargo: ${error.message}`, isVisible: true, type: 'error' });
       } else {
-        console.log('StudentsPage: Role updated successfully');
+        console.log('StudentsPage: Role updated successfully', data);
+        setToast({ message: 'Cargo alterado com sucesso!', isVisible: true, type: 'success' });
         setUsers(users.map(u => u.id === id ? { ...u, role: newRole } : u));
       }
     }
@@ -94,6 +106,12 @@ function StudentsContent() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white pb-24">
+      <Toast 
+        message={toast.message}
+        isVisible={toast.isVisible}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, isVisible: false })}
+      />
       <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 px-4 py-4">
         <div className="max-w-md mx-auto">
           <div className="flex items-center justify-between mb-4">

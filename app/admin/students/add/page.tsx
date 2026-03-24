@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Header } from '@/components/Header';
-import { User, Mail, Hash, School, Save, X, Camera, Edit3 } from 'lucide-react';
+import { User, Mail, Hash, School, Save, X, Camera, Edit3, CheckCircle2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -18,8 +18,14 @@ export default function AddStudentPage() {
   const { profile, loading: authLoading } = useAuth();
   const mounted = useMounted();
   const [isActive, setIsActive] = React.useState(true);
+  const [isAdminRole, setIsAdminRole] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [showSuccess, setShowSuccess] = React.useState(false);
+  const [toast, setToast] = React.useState<{ message: string; isVisible: boolean; type: 'success' | 'error' }>({
+    message: '',
+    isVisible: false,
+    type: 'success'
+  });
   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [formData, setFormData] = React.useState({
@@ -55,9 +61,9 @@ export default function AddStudentPage() {
           {
             full_name: formData.fullName,
             email: formData.email,
-            course: formData.course,
+            course: isAdminRole ? '' : formData.course,
             status: isActive ? 'active' : 'inactive',
-            role: 'student',
+            role: isAdminRole ? 'admin' : 'student',
             avatar_url: avatarUrl,
           },
         ]);
@@ -69,17 +75,18 @@ export default function AddStudentPage() {
         await supabase.from('activities').insert([
           {
             student_id: null, // This is an admin action
-            action: `Adicionou aluno: ${formData.fullName}`,
+            action: `Adicionou ${isAdminRole ? 'administrador' : 'aluno'}: ${formData.fullName}`,
           }
         ]);
       }
 
       setShowSuccess(true);
+      setToast({ message: 'Usuário cadastrado com sucesso!', isVisible: true, type: 'success' });
       setTimeout(() => {
         router.push('/admin/students');
-      }, 1500);
+      }, 2000);
     } catch (err: any) {
-      alert(err.message || 'Erro ao salvar aluno');
+      setToast({ message: err.message || 'Erro ao salvar aluno', isVisible: true, type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -87,12 +94,42 @@ export default function AddStudentPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col">
-      <Header title="Adicionar Aluno" />
+      <Header title="Novo Usuário" />
       <Toast 
-        message="Aluno cadastrado com sucesso!" 
-        isVisible={showSuccess} 
-        onClose={() => setShowSuccess(false)} 
+        message={toast.message} 
+        isVisible={toast.isVisible} 
+        type={toast.type}
+        onClose={() => setToast({ ...toast, isVisible: false })} 
       />
+
+      {showSuccess && (
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-6"
+        >
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-slate-900 border border-slate-800 p-8 rounded-3xl w-full max-w-xs text-center shadow-2xl shadow-green-500/10"
+          >
+            <div className="size-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="w-10 h-10 text-green-500" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Sucesso!</h2>
+            <p className="text-slate-400 text-sm mb-6">O usuário foi cadastrado corretamente no sistema.</p>
+            <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 1.5, ease: "linear" }}
+                className="bg-green-500 h-full"
+              />
+            </div>
+            <p className="text-[10px] text-slate-500 mt-2 uppercase tracking-widest font-bold">Redirecionando...</p>
+          </motion.div>
+        </motion.div>
+      )}
 
       <main className="flex-1 overflow-y-auto pb-32">
         <form onSubmit={handleSubmit} className="max-w-md mx-auto">
@@ -130,7 +167,7 @@ export default function AddStudentPage() {
               </div>
             </div>
             <div className="mt-4 text-center">
-              <p className="text-xl font-bold">Foto do Aluno</p>
+              <p className="text-xl font-bold">Foto do Usuário</p>
               <p className="text-green-500 text-sm font-medium">Toque para carregar imagem</p>
             </div>
           </div>
@@ -146,14 +183,14 @@ export default function AddStudentPage() {
                   required
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  placeholder="Digite o nome completo do aluno"
+                  placeholder="Digite o nome completo"
                   className="w-full pl-12 pr-4 h-14 rounded-xl border border-slate-800 bg-slate-900 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-slate-400 text-sm font-semibold px-1">E-mail Institucional</label>
+              <label className="text-slate-400 text-sm font-semibold px-1">E-mail</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
                 <input 
@@ -161,51 +198,77 @@ export default function AddStudentPage() {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="exemplo@escola.com"
+                  placeholder="exemplo@email.com"
                   className="w-full pl-12 pr-4 h-14 rounded-xl border border-slate-800 bg-slate-900 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-slate-400 text-sm font-semibold px-1">Status</label>
-              <div className="flex items-center h-14 px-4 bg-slate-900 rounded-xl border border-slate-800 justify-between">
-                <span className="text-sm text-slate-400">{isActive ? 'Ativo' : 'Inativo'}</span>
-                <button 
-                  type="button"
-                  onClick={() => setIsActive(!isActive)}
-                  className={cn(
-                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
-                    isActive ? "bg-green-500" : "bg-slate-700"
-                  )}
-                >
-                  <span 
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-slate-400 text-sm font-semibold px-1">Status</label>
+                <div className="flex items-center h-14 px-4 bg-slate-900 rounded-xl border border-slate-800 justify-between">
+                  <span className="text-xs text-slate-400">{isActive ? 'Ativo' : 'Inativo'}</span>
+                  <button 
+                    type="button"
+                    onClick={() => setIsActive(!isActive)}
                     className={cn(
-                      "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                      isActive ? "translate-x-6" : "translate-x-1"
+                      "relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none",
+                      isActive ? "bg-green-500" : "bg-slate-700"
                     )}
-                  />
-                </button>
+                  >
+                    <span 
+                      className={cn(
+                        "inline-block h-3 w-3 transform rounded-full bg-white transition-transform",
+                        isActive ? "translate-x-5" : "translate-x-1"
+                      )}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-slate-400 text-sm font-semibold px-1">Administrador</label>
+                <div className="flex items-center h-14 px-4 bg-slate-900 rounded-xl border border-slate-800 justify-between">
+                  <span className="text-xs text-slate-400">{isAdminRole ? 'Sim' : 'Não'}</span>
+                  <button 
+                    type="button"
+                    onClick={() => setIsAdminRole(!isAdminRole)}
+                    className={cn(
+                      "relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none",
+                      isAdminRole ? "bg-purple-500" : "bg-slate-700"
+                    )}
+                  >
+                    <span 
+                      className={cn(
+                        "inline-block h-3 w-3 transform rounded-full bg-white transition-transform",
+                        isAdminRole ? "translate-x-5" : "translate-x-1"
+                      )}
+                    />
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-slate-400 text-sm font-semibold px-1">Curso</label>
-              <div className="relative">
-                <School className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
-                <select 
-                  required
-                  value={formData.course}
-                  onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-                  className="w-full pl-12 pr-10 h-14 rounded-xl border border-slate-800 bg-slate-900 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none appearance-none"
-                >
-                  <option value="">Selecione o curso</option>
-                  <option value="Mecânica de Motos">Mecânica de Motos</option>
-                  <option value="Mecânica Automotiva">Mecânica Automotiva</option>
-                  <option value="Mecânica Elétrica">Mecânica Elétrica</option>
-                </select>
+            {!isAdminRole && (
+              <div className="space-y-2">
+                <label className="text-slate-400 text-sm font-semibold px-1">Curso</label>
+                <div className="relative">
+                  <School className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+                  <select 
+                    required={!isAdminRole}
+                    value={formData.course}
+                    onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+                    className="w-full pl-12 pr-10 h-14 rounded-xl border border-slate-800 bg-slate-900 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none appearance-none"
+                  >
+                    <option value="">Selecione o curso</option>
+                    <option value="Mecânica de Motos">Mecânica de Motos</option>
+                    <option value="Mecânica Automotiva">Mecânica Automotiva</option>
+                    <option value="Mecânica Elétrica">Mecânica Elétrica</option>
+                  </select>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-slate-950/80 backdrop-blur-md border-t border-slate-800 flex flex-col gap-3 z-50">
@@ -216,7 +279,7 @@ export default function AddStudentPage() {
                 className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Save className="w-5 h-5" />
-                {loading ? 'Salvando...' : 'Salvar Aluno'}
+                {loading ? 'Salvando...' : 'Salvar Usuário'}
               </button>
               <button 
                 type="button"

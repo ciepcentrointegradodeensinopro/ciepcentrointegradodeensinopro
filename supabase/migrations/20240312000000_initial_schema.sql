@@ -60,6 +60,17 @@ ALTER TABLE materials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE activities ENABLE ROW LEVEL SECURITY;
 
+-- Helper function to check if user is admin without recursion
+CREATE OR REPLACE FUNCTION is_admin() 
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM profiles 
+    WHERE user_id = auth.uid() AND role = 'admin'
+  ) OR (auth.jwt() ->> 'email' = 'ciepcentrointegradodeensinopro@gmail.com');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Profiles policies
 CREATE POLICY "Public profiles are viewable by everyone." ON profiles
   FOR SELECT USING (true);
@@ -68,80 +79,43 @@ CREATE POLICY "Users can insert their own profile." ON profiles
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Admins can insert any profile." ON profiles
-  FOR INSERT WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE user_id = auth.uid() AND role = 'admin'
-    )
-  );
+  FOR INSERT WITH CHECK (is_admin());
 
 CREATE POLICY "Users can update own profile." ON profiles
   FOR UPDATE USING (auth.uid() = user_id);
 
 CREATE POLICY "Admins can update any profile." ON profiles
-  FOR UPDATE USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE user_id = auth.uid() AND role = 'admin'
-    )
-  );
+  FOR UPDATE USING (is_admin());
 
 CREATE POLICY "Admins can delete any profile." ON profiles
-  FOR DELETE USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE user_id = auth.uid() AND role = 'admin'
-    )
-  );
+  FOR DELETE USING (is_admin());
 
 -- Disciplines policies
 CREATE POLICY "Disciplines are viewable by everyone." ON disciplines
   FOR SELECT USING (true);
 
 CREATE POLICY "Only admins can manage disciplines." ON disciplines
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE user_id = auth.uid() AND role = 'admin'
-    )
-  );
+  FOR ALL USING (is_admin());
 
 -- Materials policies
 CREATE POLICY "Materials are viewable by authenticated users." ON materials
   FOR SELECT USING (auth.role() = 'authenticated');
 
 CREATE POLICY "Only admins can insert materials." ON materials
-  FOR INSERT WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE user_id = auth.uid() AND role = 'admin'
-    )
-  );
+  FOR INSERT WITH CHECK (is_admin());
 
 CREATE POLICY "Only admins can delete materials." ON materials
-  FOR DELETE USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE user_id = auth.uid() AND role = 'admin'
-    )
-  );
+  FOR DELETE USING (is_admin());
 
 -- Payments policies
 CREATE POLICY "Users can view their own payments." ON payments
-  FOR SELECT USING (EXISTS (
-    SELECT 1 FROM profiles WHERE user_id = auth.uid() AND (id = student_id OR role = 'admin')
-  ));
+  FOR SELECT USING (
+    (SELECT user_id FROM profiles WHERE id = student_id) = auth.uid() OR is_admin()
+  );
 
 CREATE POLICY "Only admins can manage payments." ON payments
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE user_id = auth.uid() AND role = 'admin'
-    )
-  );
+  FOR ALL USING (is_admin());
 
 -- Activities policies
 CREATE POLICY "Admins can view all activities." ON activities
-  FOR SELECT USING (EXISTS (
-    SELECT 1 FROM profiles WHERE user_id = auth.uid() AND role = 'admin'
-  ));
+  FOR SELECT USING (is_admin());
