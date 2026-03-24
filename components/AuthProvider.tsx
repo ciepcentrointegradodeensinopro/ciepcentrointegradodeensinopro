@@ -65,23 +65,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         event.preventDefault();
         event.stopPropagation();
         
-        try {
-          const keys = Object.keys(localStorage);
-          keys.forEach(key => {
-            if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
-              localStorage.removeItem(key);
-            }
-          });
-        } catch (e) {}
+        const clearSession = async () => {
+          try {
+            // Try to sign out to clear server-side session if possible
+            await supabase.auth.signOut().catch(() => {});
+            
+            // Manually clear local storage for this client
+            const keys = Object.keys(localStorage);
+            keys.forEach(key => {
+              if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+                localStorage.removeItem(key);
+              }
+            });
+          } catch (e) {}
+          
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
+          
+          const publicRoutes = ['/', '/register'];
+          if (pathnameRef.current && !publicRoutes.includes(pathnameRef.current)) {
+            router.push('/');
+          }
+        };
         
-        setUser(null);
-        setProfile(null);
-        setLoading(false);
-        
-        const publicRoutes = ['/', '/register'];
-        if (pathnameRef.current && !publicRoutes.includes(pathnameRef.current)) {
-          router.push('/');
-        }
+        clearSession();
       }
     };
 
@@ -127,13 +135,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initialize = async () => {
       try {
         console.log('AuthProvider: Starting initialization');
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        // Use getSession but catch errors specifically
+        const { data, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
           console.error('AuthProvider: getSession error', sessionError.message);
+          // If it's a refresh token error, we MUST clear the session
+          if (sessionError.message?.includes('Refresh Token') || sessionError.status === 400 || sessionError.status === 401) {
+             await supabase.auth.signOut().catch(() => {});
+             const keys = Object.keys(localStorage);
+             keys.forEach(key => {
+               if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+                 localStorage.removeItem(key);
+               }
+             });
+          }
           throw sessionError;
         }
 
+        const session = data.session;
         if (session?.user) {
           console.log('AuthProvider: Initial session found', session.user.id);
           setUser(session.user);
@@ -146,11 +166,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error: any) {
         console.error('AuthProvider: Initialization error', error);
-        if (error.message?.includes('Refresh Token') || error.status === 400 || error.status === 401) {
-          await supabase.auth.signOut().catch(() => {
-            localStorage.clear();
-          });
-        }
+        setUser(null);
+        setProfile(null);
       } finally {
         console.log('AuthProvider: Initialization finally block');
         setLoading(false);

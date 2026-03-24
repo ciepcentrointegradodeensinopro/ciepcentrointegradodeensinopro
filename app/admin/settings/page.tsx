@@ -36,7 +36,7 @@ export default function AdminSettingsPage() {
     {
       title: 'Gestão de Acesso',
       items: [
-        { label: 'Gerenciar Administradores', icon: Shield, href: '/admin/users?role=admin', color: 'text-purple-500' },
+        { label: 'Gerenciar Administradores', icon: Shield, href: '/admin/students?filter=Admins', color: 'text-purple-500' },
         { label: 'Permissões de Alunos', icon: Users, href: '/admin/students', color: 'text-blue-500' },
       ]
     },

@@ -11,16 +11,19 @@ import { supabase } from '@/lib/supabase';
 
 import { useAuth } from '@/components/AuthProvider';
 import { useMounted } from '@/hooks/useMounted';
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
 import Image from 'next/image';
 
-export default function StudentsPage() {
-  const { isAdmin, loading: authLoading } = useAuth();
+function StudentsContent() {
+  const { user: currentUser, isAdmin, loading: authLoading } = useAuth();
   const mounted = useMounted();
+  const searchParams = useSearchParams();
   const [users, setUsers] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState('');
-  const [filter, setFilter] = React.useState('Todos');
+  const [filter, setFilter] = React.useState(searchParams.get('filter') || 'Todos');
 
   const fetchUsers = React.useCallback(async () => {
     setLoading(true);
@@ -67,12 +70,23 @@ export default function StudentsPage() {
   };
 
   const toggleRole = async (id: string, currentRole: string) => {
+    const isSelf = currentUser?.id === users.find(u => u.id === id)?.user_id;
+    
+    if (isSelf) {
+      alert('Você não pode alterar seu próprio cargo para evitar perda de acesso.');
+      return;
+    }
+
     const newRole = currentRole === 'admin' ? 'student' : 'admin';
     if (confirm(`Deseja alterar o cargo para ${newRole === 'admin' ? 'Administrador' : 'Aluno'}?`)) {
+      console.log(`StudentsPage: Changing role for ${id} from ${currentRole} to ${newRole}`);
       const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', id);
+      
       if (error) {
-        alert('Erro ao alterar cargo');
+        console.error('StudentsPage: Error updating role', error);
+        alert(`Erro ao alterar cargo: ${error.message}`);
       } else {
+        console.log('StudentsPage: Role updated successfully');
         setUsers(users.map(u => u.id === id ? { ...u, role: newRole } : u));
       }
     }
@@ -212,5 +226,17 @@ export default function StudentsPage() {
 
       <BottomNav isAdmin={isAdmin} />
     </div>
+  );
+}
+
+export default function StudentsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
+      </div>
+    }>
+      <StudentsContent />
+    </Suspense>
   );
 }
