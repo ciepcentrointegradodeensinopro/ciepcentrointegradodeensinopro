@@ -128,8 +128,16 @@ export default function Dashboard() {
     <div className="min-h-screen bg-slate-950 text-white pb-24">
       <header className="p-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="size-10 bg-green-500 rounded-lg flex items-center justify-center">
-            <School className="text-white w-6 h-6" />
+          <div className="size-10 relative">
+            {mounted && (
+              <Image 
+                src="https://drive.google.com/uc?id=1hCUwRjRdjfohV4MliKVsC8Z7Ozty2308"
+                alt="Ciep Logo"
+                fill
+                className="object-contain"
+                priority
+              />
+            )}
           </div>
           <span className="text-xl font-bold">Ciep<span className="text-green-500">Gestão</span></span>
         </div>

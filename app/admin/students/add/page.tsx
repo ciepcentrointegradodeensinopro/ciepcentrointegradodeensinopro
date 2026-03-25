@@ -51,6 +51,22 @@ export default function AddStudentPage() {
     password: '',
     course: '',
   });
+  const [emailError, setEmailError] = React.useState<string | null>(null);
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (email && !emailRegex.test(email)) {
+      setEmailError('Formato de e-mail inválido');
+    } else {
+      setEmailError(null);
+    }
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData({ ...formData, email: value });
+    validateEmail(value);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -247,16 +263,26 @@ export default function AddStudentPage() {
             <div className="space-y-2">
               <label className="text-slate-400 text-sm font-semibold px-1">E-mail</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+                <Mail className={cn("absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors", emailError ? "text-red-500" : "text-slate-500")} />
                 <input 
                   type="email"
                   required
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={handleEmailChange}
                   placeholder="exemplo@email.com"
-                  className="w-full pl-12 pr-4 h-14 rounded-xl border border-slate-800 bg-slate-900 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none"
+                  className={cn(
+                    "w-full pl-12 pr-4 h-14 rounded-xl border bg-slate-900 text-white focus:ring-2 transition-all outline-none",
+                    emailError 
+                      ? "border-red-500/50 focus:ring-red-500/40 focus:border-red-500" 
+                      : "border-slate-800 focus:ring-green-500 focus:border-green-500"
+                  )}
                 />
               </div>
+              {emailError && (
+                <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider px-1 animate-in fade-in slide-in-from-top-1">
+                  {emailError}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

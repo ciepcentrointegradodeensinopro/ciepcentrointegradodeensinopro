@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/components/AuthProvider';
 import { useMounted } from '@/hooks/useMounted';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 export default function EnrollmentDeclarationPage() {
   const { user, profile, isAdmin, loading } = useAuth();
@@ -68,8 +69,16 @@ export default function EnrollmentDeclarationPage() {
           >
             {/* Document Header */}
             <div className="flex flex-col items-center text-center mb-12 border-b-2 border-slate-100 pb-8">
-              <div className="size-20 bg-green-600 rounded-2xl flex items-center justify-center mb-4 print:bg-green-600">
-                <ShieldCheck className="w-12 h-12 text-white" />
+              <div className="size-24 relative mb-4">
+                {mounted && (
+                  <Image 
+                    src="https://drive.google.com/uc?id=1hCUwRjRdjfohV4MliKVsC8Z7Ozty2308"
+                    alt="Ciep Logo"
+                    fill
+                    className="object-contain"
+                    priority
+                  />
+                )}
               </div>
               <h1 className="text-2xl font-black uppercase tracking-tighter">Ciep Centro Integrado de Ensino</h1>
               <p className="text-sm text-slate-500 font-bold uppercase tracking-widest mt-1">Excelência em Educação Profissional</p>

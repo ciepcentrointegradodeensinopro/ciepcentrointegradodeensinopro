@@ -72,11 +72,11 @@ export default function LoginPage() {
         <div className="px-6 pt-4">
           <div className="w-full h-[240px] flex items-center justify-center rounded-xl bg-slate-800/50 overflow-hidden relative">
             <Image 
-              src="https://lh3.googleusercontent.com/d/1hCUwRjRdjfohV4MliKVsC8Z7Ozty2308"
+              src="https://drive.google.com/uc?id=1hCUwRjRdjfohV4MliKVsC8Z7Ozty2308"
               alt="Ciep Logo"
               fill
               className="object-contain p-2"
-              referrerPolicy="no-referrer"
+              priority
             />
           </div>
         </div>

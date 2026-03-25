@@ -3,7 +3,7 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { User, Download, School, Clock, ChevronRight, Settings, Bell, Lock, CreditCard, BookOpen, LogOut, Edit2, FileText } from 'lucide-react';
+import { User, ChevronRight, Settings, Bell, Lock, CreditCard, BookOpen, LogOut, Edit2, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -66,12 +66,6 @@ export default function ProfilePage() {
     };
     reader.readAsDataURL(file);
   };
-
-  const stats = [
-    { label: 'Docs', value: '128', icon: Download },
-    { label: 'Cursos', value: '12', icon: School },
-    { label: 'Horas', value: '450', icon: Clock },
-  ];
 
   const settingsItems = [
     { label: 'Informações da Conta', icon: User, href: '#' },
@@ -157,19 +151,6 @@ export default function ProfilePage() {
             >
               Editar Perfil
             </button>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-3 px-4">
-            {stats.map((stat, i) => (
-              <div key={i} className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-2">
-                <div className="flex items-center gap-2 text-slate-500">
-                  <stat.icon className="w-3 h-3" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">{stat.label}</span>
-                </div>
-                <p className="text-xl font-bold">{stat.value}</p>
-              </div>
-            ))}
           </div>
 
           {/* Settings List */}
