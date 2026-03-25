@@ -3,7 +3,7 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { User, Download, School, Clock, ChevronRight, Settings, Bell, Lock, CreditCard, BookOpen, LogOut, Edit2 } from 'lucide-react';
+import { User, Download, School, Clock, ChevronRight, Settings, Bell, Lock, CreditCard, BookOpen, LogOut, Edit2, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -33,7 +33,8 @@ export default function ProfilePage() {
 
     // Check file size (limit to 1MB for base64 storage)
     if (file.size > 1024 * 1024) {
-      alert('A imagem deve ter no máximo 1MB.');
+      setSuccessMessage('A imagem deve ter no máximo 1MB.');
+      setShowSuccess(true);
       return;
     }
 
@@ -57,7 +58,8 @@ export default function ProfilePage() {
           window.location.reload();
         }, 1500);
       } catch (error: any) {
-        alert('Erro ao atualizar foto: ' + error.message);
+        setSuccessMessage('Erro ao atualizar foto: ' + error.message);
+        setShowSuccess(true);
       } finally {
         setUploading(false);
       }
@@ -78,6 +80,7 @@ export default function ProfilePage() {
     { label: 'Financeiro - Boletos', icon: CreditCard, href: '/finance' },
     { label: 'Material', icon: BookOpen, href: '/materials' },
     { label: 'Carteira de estudante', icon: CreditCard, href: '/id-card' },
+    { label: 'Declaração de Matrícula', icon: FileText, href: '/profile/declaration' },
   ];
 
   if (loading) {

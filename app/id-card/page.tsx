@@ -72,10 +72,6 @@ export default function IDCardPage() {
                   <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Curso</p>
                   <p className="text-green-500 text-sm font-bold">{profile?.course || 'Não informado'}</p>
                 </div>
-                <div>
-                  <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Matrícula</p>
-                  <p className="text-sm font-medium">{profile?.ra || '---'}</p>
-                </div>
               </div>
             </div>
 

@@ -3,8 +3,8 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { FileText, Download, CheckCircle, MessageSquare, Clock, File, PlayCircle, Eye, ExternalLink } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { FileText, Download, CheckCircle, MessageSquare, Clock, File, PlayCircle, Eye, ExternalLink, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
@@ -18,6 +18,7 @@ export default function MaterialDetailsPage() {
   const mounted = useMounted();
   const [material, setMaterial] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
+  const [isViewerOpen, setIsViewerOpen] = React.useState(false);
 
   React.useEffect(() => {
     const fetchMaterial = async () => {
@@ -139,7 +140,36 @@ export default function MaterialDetailsPage() {
           )}
 
           {/* PDF Viewer / Video Preview / Link Card */}
-          {isPDF && material.file_url ? (
+          {(isPDF || isVideo) && material.file_url && material.file_url.includes('drive.google.com') ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                  <Eye className="w-4 h-4" /> {isVideo ? 'Visualização do Vídeo' : 'Visualização do PDF'}
+                </h3>
+                <button 
+                  onClick={() => window.open(material.file_url, '_blank')}
+                  className="text-[10px] font-bold text-green-500 uppercase hover:underline flex items-center gap-1"
+                >
+                  <ExternalLink className="w-3 h-3" /> Abrir em nova aba
+                </button>
+              </div>
+              <div 
+                onClick={() => setIsViewerOpen(true)}
+                className="relative aspect-video w-full rounded-2xl bg-slate-900 overflow-hidden border border-slate-800 shadow-2xl cursor-pointer group"
+              >
+                <iframe 
+                  src={getEmbedUrl(material.file_url)} 
+                  className="w-full h-full border-none pointer-events-none"
+                  allow="autoplay; encrypted-media"
+                ></iframe>
+                <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <div className="bg-green-600 text-white px-4 py-2 rounded-full font-bold text-xs flex items-center gap-2">
+                    <Eye className="w-4 h-4" /> Ver em Tela Cheia
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : isPDF && material.file_url ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
@@ -152,12 +182,20 @@ export default function MaterialDetailsPage() {
                   <ExternalLink className="w-3 h-3" /> Abrir em nova aba
                 </button>
               </div>
-              <div className="relative aspect-[3/4] w-full rounded-2xl bg-slate-900 overflow-hidden border border-slate-800 shadow-2xl">
+              <div 
+                onClick={() => setIsViewerOpen(true)}
+                className="relative aspect-[3/4] w-full rounded-2xl bg-slate-900 overflow-hidden border border-slate-800 shadow-2xl cursor-pointer group"
+              >
                 <iframe 
                   src={getEmbedUrl(material.file_url)} 
-                  className="w-full h-full border-none"
+                  className="w-full h-full border-none pointer-events-none"
                   allow="autoplay"
                 ></iframe>
+                <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <div className="bg-green-600 text-white px-4 py-2 rounded-full font-bold text-xs flex items-center gap-2">
+                    <Eye className="w-4 h-4" /> Ver em Tela Cheia
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
@@ -198,6 +236,68 @@ export default function MaterialDetailsPage() {
       </main>
 
       <BottomNav />
+
+      {/* Full Screen Viewer Modal */}
+      <AnimatePresence>
+        {isViewerOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-slate-950 flex flex-col"
+          >
+            <header className="bg-slate-900 border-b border-slate-800 p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <button 
+                  onClick={() => setIsViewerOpen(false)}
+                  className="p-2 hover:bg-slate-800 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+                <div className="min-w-0">
+                  <h2 className="font-bold truncate text-sm">{material.title}</h2>
+                  <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">
+                    {getDisciplineName(material.discipline)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => window.open(material.file_url, '_blank')}
+                  className="p-2 text-green-500 hover:bg-green-500/10 rounded-full transition-colors"
+                  title="Abrir em nova aba"
+                >
+                  <ExternalLink className="w-5 h-5" />
+                </button>
+              </div>
+            </header>
+            
+            <main className="flex-1 bg-slate-950 relative overflow-hidden">
+              <iframe 
+                src={getEmbedUrl(material.file_url)} 
+                className="w-full h-full border-none"
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+              ></iframe>
+            </main>
+
+            <footer className="p-4 bg-slate-900 border-t border-slate-800 flex gap-3">
+              <button 
+                onClick={() => window.open(material.file_url, '_blank')}
+                className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-sm"
+              >
+                <Download className="w-4 h-4" /> Baixar Arquivo
+              </button>
+              <button 
+                onClick={() => setIsViewerOpen(false)}
+                className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl text-sm"
+              >
+                Fechar
+              </button>
+            </footer>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

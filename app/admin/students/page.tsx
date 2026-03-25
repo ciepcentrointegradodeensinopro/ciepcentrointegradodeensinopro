@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { Toast } from '@/components/Toast';
+import { ConfirmationModal } from '@/components/ConfirmationModal';
 
 import { useAuth } from '@/components/AuthProvider';
 import { useMounted } from '@/hooks/useMounted';
@@ -25,6 +26,8 @@ function StudentsContent() {
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState('');
   const [filter, setFilter] = React.useState(searchParams.get('filter') || 'Todos');
+  const [userToDelete, setUserToDelete] = React.useState<any>(null);
+  const [roleToToggle, setRoleToToggle] = React.useState<{ id: string; currentRole: string; fullName: string } | null>(null);
   const [toast, setToast] = React.useState<{ message: string; isVisible: boolean; type: 'success' | 'error' }>({
     message: '',
     isVisible: false,
@@ -33,17 +36,22 @@ function StudentsContent() {
 
   const fetchUsers = React.useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('full_name', { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('full_name', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching users:', error);
-    } else {
-      setUsers(data || []);
+      if (error) {
+        console.error('Error fetching users:', error);
+      } else {
+        setUsers(data || []);
+      }
+    } catch (err) {
+      console.error('Exception fetching users:', err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   React.useEffect(() => {
@@ -52,7 +60,6 @@ function StudentsContent() {
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.full_name?.toLowerCase().includes(search.toLowerCase()) || 
-                          user.ra?.toLowerCase().includes(search.toLowerCase()) ||
                           user.course?.toLowerCase().includes(search.toLowerCase()) ||
                           user.email?.toLowerCase().includes(search.toLowerCase());
     
@@ -65,15 +72,14 @@ function StudentsContent() {
   });
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este usuário?')) {
-      const { error } = await supabase.from('profiles').delete().eq('id', id);
-      if (error) {
-        setToast({ message: 'Erro ao excluir usuário', isVisible: true, type: 'error' });
-      } else {
-        setToast({ message: 'Usuário excluído com sucesso!', isVisible: true, type: 'success' });
-        setUsers(users.filter(u => u.id !== id));
-      }
+    const { error } = await supabase.from('profiles').delete().eq('id', id);
+    if (error) {
+      setToast({ message: 'Erro ao excluir usuário', isVisible: true, type: 'error' });
+    } else {
+      setToast({ message: 'Usuário excluído com sucesso!', isVisible: true, type: 'success' });
+      setUsers(users.filter(u => u.id !== id));
     }
+    setUserToDelete(null);
   };
 
   const toggleRole = async (id: string, currentRole: string) => {
@@ -85,23 +91,22 @@ function StudentsContent() {
     }
 
     const newRole = currentRole === 'admin' ? 'student' : 'admin';
-    if (confirm(`Deseja alterar o cargo para ${newRole === 'admin' ? 'Administrador' : 'Aluno'}?`)) {
-      console.log(`StudentsPage: Changing role for profile ID ${id} from ${currentRole} to ${newRole}`);
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({ role: newRole })
-        .eq('id', id)
-        .select();
-      
-      if (error) {
-        console.error('StudentsPage: Error updating role', error);
-        setToast({ message: `Erro ao alterar cargo: ${error.message}`, isVisible: true, type: 'error' });
-      } else {
-        console.log('StudentsPage: Role updated successfully', data);
-        setToast({ message: 'Cargo alterado com sucesso!', isVisible: true, type: 'success' });
-        setUsers(users.map(u => u.id === id ? { ...u, role: newRole } : u));
-      }
+    console.log(`StudentsPage: Changing role for profile ID ${id} from ${currentRole} to ${newRole}`);
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ role: newRole })
+      .eq('id', id)
+      .select();
+    
+    if (error) {
+      console.error('StudentsPage: Error updating role', error);
+      setToast({ message: `Erro ao alterar cargo: ${error.message}`, isVisible: true, type: 'error' });
+    } else {
+      console.log('StudentsPage: Role updated successfully', data);
+      setToast({ message: 'Cargo alterado com sucesso!', isVisible: true, type: 'success' });
+      setUsers(users.map(u => u.id === id ? { ...u, role: newRole } : u));
     }
+    setRoleToToggle(null);
   };
 
   return (
@@ -137,7 +142,7 @@ function StudentsContent() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar por nome, curso ou RA..."
+                placeholder="Buscar por nome ou curso..."
                 className="w-full bg-slate-900 border-none rounded-xl py-3 pl-11 pr-4 focus:ring-2 focus:ring-green-500/50 text-base outline-none"
               />
             </div>
@@ -214,14 +219,14 @@ function StudentsContent() {
               </div>
               <div className="flex items-center gap-1">
                 <button 
-                  onClick={() => toggleRole(user.id, user.role)}
+                  onClick={() => setRoleToToggle({ id: user.id, currentRole: user.role, fullName: user.full_name })}
                   className="p-2 text-slate-500 hover:text-purple-500 transition-colors"
                   title="Alterar Cargo"
                 >
                   <Shield className="w-5 h-5" />
                 </button>
                 <button 
-                  onClick={() => handleDelete(user.id)}
+                  onClick={() => setUserToDelete(user)}
                   className="p-2 text-slate-500 hover:text-red-500 transition-colors"
                   title="Excluir"
                 >
@@ -243,17 +248,33 @@ function StudentsContent() {
       </Link>
 
       <BottomNav isAdmin={isAdmin} />
+
+      <ConfirmationModal 
+        isOpen={!!userToDelete}
+        onClose={() => setUserToDelete(null)}
+        onConfirm={() => handleDelete(userToDelete.id)}
+        title="Excluir Usuário?"
+        description={`Tem certeza que deseja excluir o usuário "${userToDelete?.full_name}"? Esta ação não pode ser desfeita.`}
+        confirmLabel="Sim, Excluir"
+        type="danger"
+      />
+
+      <ConfirmationModal 
+        isOpen={!!roleToToggle}
+        onClose={() => setRoleToToggle(null)}
+        onConfirm={() => toggleRole(roleToToggle!.id, roleToToggle!.currentRole)}
+        title="Alterar Cargo?"
+        description={`Deseja alterar o cargo de "${roleToToggle?.fullName}" para ${roleToToggle?.currentRole === 'admin' ? 'Aluno' : 'Administrador'}?`}
+        confirmLabel="Confirmar Alteração"
+        type="warning"
+      />
     </div>
   );
 }
 
 export default function StudentsPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
-      </div>
-    }>
+    <Suspense fallback={null}>
       <StudentsContent />
     </Suspense>
   );

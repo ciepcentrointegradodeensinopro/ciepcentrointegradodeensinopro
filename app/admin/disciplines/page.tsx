@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { Toast } from '@/components/Toast';
+import { ConfirmationModal } from '@/components/ConfirmationModal';
 
 export default function DisciplinesPage() {
   const { isAdmin, loading: authLoading } = useAuth();
@@ -16,6 +17,12 @@ export default function DisciplinesPage() {
   const [newDiscipline, setNewDiscipline] = React.useState({ name: '', slug: '' });
   const [isAdding, setIsAdding] = React.useState(false);
   const [showSuccess, setShowSuccess] = React.useState(false);
+  const [disciplineToDelete, setDisciplineToDelete] = React.useState<any>(null);
+  const [toast, setToast] = React.useState<{ message: string; isVisible: boolean; type: 'success' | 'error' }>({
+    message: '',
+    isVisible: false,
+    type: 'success'
+  });
 
   const fetchDisciplines = React.useCallback(async () => {
     setLoading(true);
@@ -53,19 +60,21 @@ export default function DisciplinesPage() {
       setDisciplines([...disciplines, data[0]]);
       setNewDiscipline({ name: '', slug: '' });
       setIsAdding(false);
-      setShowSuccess(true);
+      setToast({ message: 'Disciplina adicionada com sucesso!', isVisible: true, type: 'success' });
     } else {
-      alert('Erro ao adicionar disciplina. Verifique se a tabela "disciplines" existe no Supabase.');
+      setToast({ message: 'Erro ao adicionar disciplina. Verifique se a tabela "disciplines" existe no Supabase.', isVisible: true, type: 'error' });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Deseja excluir esta disciplina?')) {
-      const { error } = await supabase.from('disciplines').delete().eq('id', id);
-      if (!error) {
-        setDisciplines(disciplines.filter(d => d.id !== id));
-      }
+    const { error } = await supabase.from('disciplines').delete().eq('id', id);
+    if (!error) {
+      setDisciplines(disciplines.filter(d => d.id !== id));
+      setToast({ message: 'Disciplina excluída com sucesso!', isVisible: true, type: 'success' });
+    } else {
+      setToast({ message: 'Erro ao excluir disciplina: ' + error.message, isVisible: true, type: 'error' });
     }
+    setDisciplineToDelete(null);
   };
 
   return (
@@ -158,7 +167,7 @@ export default function DisciplinesPage() {
                   </div>
                 </div>
                 <button 
-                  onClick={() => handleDelete(d.id)}
+                  onClick={() => setDisciplineToDelete(d)}
                   className="p-2 text-slate-500 hover:text-red-500 transition-colors"
                 >
                   <Trash2 className="w-5 h-5" />
@@ -172,6 +181,23 @@ export default function DisciplinesPage() {
       </main>
 
       <BottomNav isAdmin={isAdmin} />
+
+      <Toast 
+        message={toast.message} 
+        isVisible={toast.isVisible} 
+        type={toast.type}
+        onClose={() => setToast({ ...toast, isVisible: false })} 
+      />
+
+      <ConfirmationModal 
+        isOpen={!!disciplineToDelete}
+        onClose={() => setDisciplineToDelete(null)}
+        onConfirm={() => handleDelete(disciplineToDelete.id)}
+        title="Excluir Disciplina?"
+        description={`Tem certeza que deseja excluir a disciplina "${disciplineToDelete?.name}"? Esta ação não pode ser desfeita.`}
+        confirmLabel="Sim, Excluir"
+        type="danger"
+      />
     </div>
   );
 }

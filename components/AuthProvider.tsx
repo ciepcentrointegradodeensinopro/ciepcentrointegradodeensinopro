@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setProfile(null);
           setLoading(false);
           
-          const publicRoutes = ['/', '/register'];
+          const publicRoutes = ['/', '/register', '/forgot-password', '/reset-password'];
           if (pathnameRef.current && !publicRoutes.includes(pathnameRef.current)) {
             router.push('/');
           }
@@ -208,7 +208,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Basic route protection
   useEffect(() => {
     if (!loading && isSupabaseConfigured) {
-      const publicRoutes = ['/', '/register'];
+      const publicRoutes = ['/', '/register', '/forgot-password', '/reset-password'];
       if (!user && pathname && !publicRoutes.includes(pathname)) {
         router.push('/');
       }

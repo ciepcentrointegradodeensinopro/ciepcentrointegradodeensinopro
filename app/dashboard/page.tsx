@@ -119,6 +119,7 @@ export default function Dashboard() {
   ] : [
     { label: 'Meus Materiais', sub: 'Apostilas e vídeos', icon: BookOpen, href: '/materials', color: 'bg-green-500' },
     { label: 'Minha Carteira', sub: 'ID Estudantil', icon: BadgeCheck, href: '/id-card', color: 'bg-green-500' },
+    { label: 'Declaração de Matrícula', sub: 'Emitir documento', icon: FileText, href: '/profile/declaration', color: 'bg-green-500' },
     { label: 'Financeiro', sub: 'Mensalidades e boletos', icon: DollarSign, href: '/finance', color: 'bg-green-500' },
     { label: 'Meu Perfil', sub: 'Dados cadastrais', icon: User, href: '/profile', color: 'bg-green-500' },
   ];

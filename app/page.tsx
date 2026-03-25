@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const { user, loading: authLoading } = useAuth();
@@ -69,10 +70,15 @@ export default function LoginPage() {
 
         {/* Hero Image */}
         <div className="px-6 pt-4">
-          <div 
-            className="w-full h-[180px] bg-center bg-cover rounded-xl"
-            style={{ backgroundImage: 'url("https://picsum.photos/seed/library/800/400")' }}
-          />
+          <div className="w-full h-[180px] flex items-center justify-center rounded-xl bg-slate-800/50 overflow-hidden relative">
+            <Image 
+              src="https://lh3.googleusercontent.com/d/1hCUwRjRdjfohV4MliKVsC8Z7Ozty2308"
+              alt="Ciep Logo"
+              fill
+              className="object-contain p-4"
+              referrerPolicy="no-referrer"
+            />
+          </div>
         </div>
 
         {/* Welcome Text */}
@@ -106,7 +112,7 @@ export default function LoginPage() {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <label className="text-slate-300 text-sm font-semibold">Senha</label>
-              <Link href="#" className="text-green-500 text-sm font-semibold hover:underline">Esqueceu a senha?</Link>
+              <Link href="/forgot-password" title="Recuperar senha" className="text-green-500 text-sm font-semibold hover:underline">Esqueceu a senha?</Link>
             </div>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />

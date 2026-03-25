@@ -38,7 +38,7 @@ export default function UploadBoletoPage() {
       // First, let's see if we can fetch ANY profiles to check connection and data
       const { data: allProfiles, error: allProfilesError } = await supabase
         .from('profiles')
-        .select('role, full_name, ra');
+        .select('role, full_name');
       
       if (allProfilesError) {
         console.error('UploadBoletoPage: Error fetching all profiles', allProfilesError);
@@ -58,7 +58,7 @@ export default function UploadBoletoPage() {
       } else {
         console.log('UploadBoletoPage: Students with role=student fetched', data?.length || 0);
         if (data && data.length > 0) {
-          console.log('UploadBoletoPage: First student:', data[0].full_name, data[0].ra);
+          console.log('UploadBoletoPage: First student:', data[0].full_name);
         }
       }
       setStudents(data || []);
@@ -72,8 +72,7 @@ export default function UploadBoletoPage() {
   }, [isAdmin]);
 
   const filteredStudents = students.filter(s => 
-    s.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-    s.ra?.toLowerCase().includes(search.toLowerCase())
+    s.full_name?.toLowerCase().includes(search.toLowerCase())
   );
 
   const handlePublish = async () => {
@@ -144,7 +143,6 @@ export default function UploadBoletoPage() {
                   </div>
                   <div>
                     <p className="text-sm font-bold">{selectedStudent.full_name}</p>
-                    <p className="text-[10px] text-green-500/60 uppercase font-bold">RA: {selectedStudent.ra || 'N/A'}</p>
                   </div>
                 </div>
                 <button 
@@ -162,7 +160,7 @@ export default function UploadBoletoPage() {
                     type="text"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Buscar por nome ou RA..."
+                    placeholder="Buscar por nome..."
                     className="w-full rounded-xl border border-slate-800 bg-slate-900 h-14 pl-12 pr-4 focus:ring-2 focus:ring-green-500 outline-none transition-all"
                   />
                 </div>
@@ -176,7 +174,6 @@ export default function UploadBoletoPage() {
                       <Users className="w-4 h-4 text-slate-500" />
                       <div>
                         <p className="text-sm font-bold">{student.full_name}</p>
-                        <p className="text-[10px] text-slate-500">RA: {student.ra || 'N/A'}</p>
                       </div>
                     </button>
                   )) : (

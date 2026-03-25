@@ -35,7 +35,7 @@ export default function RegisterPage() {
     if (!file) return;
 
     if (file.size > 1024 * 1024) {
-      alert('A imagem deve ter no máximo 1MB.');
+      setError('A imagem deve ter no máximo 1MB.');
       return;
     }
 
@@ -62,6 +62,14 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Por favor, insira um e-mail válido.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 

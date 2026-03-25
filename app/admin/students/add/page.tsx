@@ -57,7 +57,7 @@ export default function AddStudentPage() {
     if (!file) return;
 
     if (file.size > 1024 * 1024) {
-      alert('A imagem deve ter no máximo 1MB.');
+      setToast({ message: 'A imagem deve ter no máximo 1MB.', isVisible: true, type: 'error' });
       return;
     }
 
@@ -70,6 +70,14 @@ export default function AddStudentPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setToast({ message: 'Por favor, insira um e-mail válido.', isVisible: true, type: 'error' });
+      return;
+    }
+
     setLoading(true);
 
     try {

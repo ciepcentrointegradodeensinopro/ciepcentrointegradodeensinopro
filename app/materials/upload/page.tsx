@@ -61,7 +61,11 @@ export default function UploadMaterialPage() {
   // Google Picker Logic
   const handleGoogleDrive = () => {
     if (!GOOGLE_API_KEY || !GOOGLE_CLIENT_ID) {
-      alert('Configuração do Google Drive ausente. Verifique as variáveis de ambiente (NEXT_PUBLIC_GOOGLE_API_KEY e NEXT_PUBLIC_GOOGLE_CLIENT_ID).');
+      setToast({
+        message: 'Configuração do Google Drive ausente. Verifique as variáveis de ambiente (NEXT_PUBLIC_GOOGLE_API_KEY e NEXT_PUBLIC_GOOGLE_CLIENT_ID).',
+        isVisible: true,
+        type: 'error'
+      });
       return;
     }
 
@@ -147,6 +151,33 @@ export default function UploadMaterialPage() {
     } finally {
       setLoading(false);
       setTimeout(() => setUploadProgress(0), 1000);
+    }
+  };
+
+  const handleLinkChange = (url: string) => {
+    const isDrive = url.includes('drive.google.com');
+    const wasDrive = fileUrl.includes('drive.google.com');
+    
+    setFileUrl(url);
+    
+    // Auto-detect Google Drive links and try to guess category
+    if (isDrive && !wasDrive) {
+      setFileName('Link do Google Drive');
+      
+      // If it's a common video format or has "video" in it, auto-select category
+      if (url.toLowerCase().includes('video') || url.toLowerCase().includes('mp4')) {
+        if (!category) setCategory('vid');
+      } else if (url.toLowerCase().includes('pdf')) {
+        if (!category) setCategory('pdf');
+      }
+
+      setToast({
+        message: 'Link do Google Drive reconhecido com sucesso!',
+        isVisible: true,
+        type: 'success'
+      });
+    } else if (!url) {
+      setFileName('');
     }
   };
 
@@ -310,14 +341,19 @@ export default function UploadMaterialPage() {
                 <LinkIcon className="w-4 h-4" />
                 <span className="text-xs font-bold uppercase tracking-wider">Ou cole o link manual</span>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 relative">
                 <input 
                   type="text"
                   value={fileUrl}
-                  onChange={(e) => setFileUrl(e.target.value)}
+                  onChange={(e) => handleLinkChange(e.target.value)}
                   placeholder="https://drive.google.com/file/d/..."
-                  className="flex-1 rounded-xl border border-slate-800 bg-slate-950 h-12 px-4 text-sm focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                  className="flex-1 rounded-xl border border-slate-800 bg-slate-950 h-12 px-4 text-sm focus:ring-2 focus:ring-green-500 outline-none transition-all pr-24"
                 />
+                {fileUrl.includes('drive.google.com') && (
+                  <div className="absolute right-20 top-1/2 -translate-y-1/2 bg-blue-500/20 text-blue-500 text-[8px] font-bold px-2 py-1 rounded uppercase tracking-tighter">
+                    Drive Link
+                  </div>
+                )}
                 {fileUrl && (
                   <button 
                     onClick={() => { setFileUrl(''); setFileName(''); }}
@@ -331,14 +367,37 @@ export default function UploadMaterialPage() {
             </div>
 
           {fileName && (
-            <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-xl flex items-center gap-3">
-              <FileText className="w-5 h-5 text-green-500" />
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={cn(
+                "p-4 rounded-xl flex items-center gap-3 border transition-all",
+                fileUrl.includes('drive.google.com') 
+                  ? "bg-blue-500/10 border-blue-500/20" 
+                  : "bg-green-500/10 border-green-500/20"
+              )}
+            >
+              {fileUrl.includes('drive.google.com') ? (
+                <ExternalLink className="w-5 h-5 text-blue-500" />
+              ) : (
+                <FileText className="w-5 h-5 text-green-500" />
+              )}
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold truncate">{fileName}</p>
-                <p className="text-[10px] text-green-500/60">Arquivo selecionado</p>
+                <p className={cn(
+                  "text-[10px] font-bold uppercase tracking-wider",
+                  fileUrl.includes('drive.google.com') ? "text-blue-500/60" : "text-green-500/60"
+                )}>
+                  {fileUrl.includes('drive.google.com') ? 'Link do Google Drive' : 'Arquivo selecionado'}
+                </p>
               </div>
-              <button onClick={() => { setFileName(''); setFileUrl(''); }} className="text-[10px] font-bold text-red-500 uppercase">Remover</button>
-            </div>
+              <button 
+                onClick={() => { setFileName(''); setFileUrl(''); }} 
+                className="text-[10px] font-bold text-red-500 uppercase hover:bg-red-500/10 px-2 py-1 rounded-lg transition-colors"
+              >
+                Remover
+              </button>
+            </motion.div>
           )}
 
           {/* Form */}

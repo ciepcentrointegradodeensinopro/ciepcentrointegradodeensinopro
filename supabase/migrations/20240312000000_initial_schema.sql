@@ -5,7 +5,6 @@ CREATE TABLE profiles (
   full_name TEXT,
   email TEXT UNIQUE,
   role TEXT DEFAULT 'student' CHECK (role IN ('student', 'admin')),
-  ra TEXT UNIQUE,
   course TEXT,
   avatar_url TEXT,
   status TEXT DEFAULT 'active' CHECK (status IN ('active', 'pending', 'inactive')),

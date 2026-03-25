@@ -8,6 +8,8 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import { Toast } from '@/components/Toast';
+import { ConfirmationModal } from '@/components/ConfirmationModal';
 
 import { useAuth } from '@/components/AuthProvider';
 import { useMounted } from '@/hooks/useMounted';
@@ -19,9 +21,15 @@ export default function FinancePage() {
   const [payments, setPayments] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [totalOpen, setTotalOpen] = React.useState(0);
+  const [paymentToDelete, setPaymentToDelete] = React.useState<any>(null);
+  const [toast, setToast] = React.useState<{ message: string; isVisible: boolean; type: 'success' | 'error' }>({
+    message: '',
+    isVisible: false,
+    type: 'success'
+  });
 
   const fetchData = React.useCallback(async () => {
-    let query = supabase.from('payments').select('*, profiles(full_name, ra)');
+    let query = supabase.from('payments').select('*, profiles(full_name)');
     
     if (!isAdmin) {
       query = query.eq('student_id', profile.id);
@@ -39,11 +47,16 @@ export default function FinancePage() {
     setLoading(false);
   }, [profile, isAdmin]);
 
-  React.useEffect(() => {
-    if (!authLoading && profile) {
-      fetchData();
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from('payments').delete().eq('id', id);
+    if (!error) {
+      setPayments(payments.filter(p => p.id !== id));
+      setToast({ message: 'Registro financeiro excluído com sucesso!', isVisible: true, type: 'success' });
+    } else {
+      setToast({ message: 'Erro ao excluir registro: ' + error.message, isVisible: true, type: 'error' });
     }
-  }, [authLoading, profile, fetchData]);
+    setPaymentToDelete(null);
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col">
@@ -122,11 +135,7 @@ export default function FinancePage() {
                           <button 
                             onClick={(e) => {
                               e.preventDefault();
-                              if (confirm('Deseja excluir este registro financeiro?')) {
-                                supabase.from('payments').delete().eq('id', bill.id).then(({ error }) => {
-                                  if (!error) setPayments(payments.filter(p => p.id !== bill.id));
-                                });
-                              }
+                              setPaymentToDelete(bill);
                             }}
                             className="p-2 text-slate-500 hover:text-red-500 transition-colors"
                           >
@@ -145,7 +154,7 @@ export default function FinancePage() {
                               <button 
                                 onClick={() => {
                                   navigator.clipboard.writeText(bill.barcode);
-                                  alert('Código copiado!');
+                                  setToast({ message: 'Código copiado!', isVisible: true, type: 'success' });
                                 }}
                                 className="flex items-center gap-2 px-4 py-2 bg-green-500 text-slate-950 rounded-lg text-xs font-bold hover:bg-green-400 transition-colors"
                               >
@@ -171,6 +180,23 @@ export default function FinancePage() {
       </main>
 
       <BottomNav isAdmin={isAdmin} />
+
+      <Toast 
+        message={toast.message} 
+        isVisible={toast.isVisible} 
+        type={toast.type}
+        onClose={() => setToast({ ...toast, isVisible: false })} 
+      />
+
+      <ConfirmationModal 
+        isOpen={!!paymentToDelete}
+        onClose={() => setPaymentToDelete(null)}
+        onConfirm={() => handleDelete(paymentToDelete.id)}
+        title="Excluir Registro?"
+        description={`Tem certeza que deseja excluir o registro financeiro de "${paymentToDelete?.profiles?.full_name}"? Esta ação não pode ser desfeita.`}
+        confirmLabel="Sim, Excluir"
+        type="danger"
+      />
     </div>
   );
 }

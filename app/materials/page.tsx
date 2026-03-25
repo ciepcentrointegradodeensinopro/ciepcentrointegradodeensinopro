@@ -3,11 +3,13 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { FileText, Download, ChevronRight, Search, BookOpen, Clock, File, Plus, PlayCircle, Trash2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { FileText, Download, ChevronRight, Search, BookOpen, Clock, File, Plus, PlayCircle, Trash2, X, Eye, ExternalLink, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
+import { Toast } from '@/components/Toast';
+import { ConfirmationModal } from '@/components/ConfirmationModal';
 
 import { useAuth } from '@/components/AuthProvider';
 import { useMounted } from '@/hooks/useMounted';
@@ -17,22 +19,46 @@ export default function MaterialsListPage() {
   const mounted = useMounted();
   const [materials, setMaterials] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [selectedMaterial, setSelectedMaterial] = React.useState<any>(null);
+  const [materialToDelete, setMaterialToDelete] = React.useState<any>(null);
+  const [toast, setToast] = React.useState<{ message: string; isVisible: boolean; type: 'success' | 'error' }>({
+    message: '',
+    isVisible: false,
+    type: 'success'
+  });
+
+  const fetchMaterials = React.useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('materials')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!error) {
+      setMaterials(data || []);
+    }
+    setLoading(false);
+  }, []);
 
   React.useEffect(() => {
-    const fetchMaterials = async () => {
-      const { data, error } = await supabase
-        .from('materials')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (!error) {
-        setMaterials(data || []);
-      }
-      setLoading(false);
-    };
-
     fetchMaterials();
-  }, []);
+  }, [fetchMaterials]);
+
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase.from('materials').delete().eq('id', id);
+      
+      if (error) throw error;
+      
+      setMaterials(materials.filter(m => m.id !== id));
+      setToast({ message: 'Material excluído com sucesso!', isVisible: true, type: 'success' });
+    } catch (error: any) {
+      console.error('Error deleting material:', error);
+      setToast({ message: 'Erro ao excluir material: ' + (error.message || 'Erro desconhecido'), isVisible: true, type: 'error' });
+    } finally {
+      setMaterialToDelete(null);
+    }
+  };
 
   const getIcon = (type: string) => {
     switch (type?.toUpperCase()) {
@@ -51,6 +77,16 @@ export default function MaterialsListPage() {
       eletrica: 'Mecânica Elétrica',
     };
     return mapping[key] || key;
+  };
+
+  const getEmbedUrl = (url: string) => {
+    if (!url) return '';
+    if (url.includes('drive.google.com')) {
+      if (url.includes('/view')) return url.replace('/view', '/preview');
+      if (url.includes('/open?id=')) return url.replace('/open?id=', '/file/d/') + '/preview';
+      if (!url.endsWith('/preview')) return url + (url.endsWith('/') ? 'preview' : '/preview');
+    }
+    return url;
   };
 
   return (
@@ -115,11 +151,7 @@ export default function MaterialsListPage() {
                           <button 
                             onClick={(e) => {
                               e.preventDefault();
-                              if (confirm('Deseja excluir este material?')) {
-                                supabase.from('materials').delete().eq('id', item.id).then(({ error }) => {
-                                  if (!error) setMaterials(materials.filter(m => m.id !== item.id));
-                                });
-                              }
+                              setMaterialToDelete(item);
                             }}
                             className="p-2 text-slate-500 hover:text-red-500 transition-colors"
                           >
@@ -130,14 +162,14 @@ export default function MaterialsListPage() {
                           onClick={(e) => {
                             e.preventDefault();
                             if (item.file_url) {
-                              window.open(item.file_url, '_blank');
+                              setSelectedMaterial(item);
                             } else {
-                              alert('Link não disponível para este material.');
+                              setToast({ message: 'Link não disponível para este material.', isVisible: true, type: 'error' });
                             }
                           }}
                           className="bg-green-600 hover:bg-green-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all active:scale-95"
                         >
-                          Baixar
+                          Visualizar
                         </button>
                       </div>
                     </motion.div>
@@ -152,6 +184,92 @@ export default function MaterialsListPage() {
       </main>
 
       <BottomNav isAdmin={isAdmin} />
+
+      <Toast 
+        message={toast.message} 
+        isVisible={toast.isVisible} 
+        type={toast.type}
+        onClose={() => setToast({ ...toast, isVisible: false })} 
+      />
+
+      <ConfirmationModal 
+        isOpen={!!materialToDelete}
+        onClose={() => setMaterialToDelete(null)}
+        onConfirm={() => handleDelete(materialToDelete.id)}
+        title="Excluir Material?"
+        description={`Tem certeza que deseja excluir o material "${materialToDelete?.title}"? Esta ação não pode ser desfeita.`}
+        confirmLabel="Sim, Excluir"
+        type="danger"
+      />
+
+      {/* Viewer Modal */}
+      <AnimatePresence>
+        {selectedMaterial && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-slate-950 flex flex-col"
+          >
+            <header className="bg-slate-900 border-b border-slate-800 p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <button 
+                  onClick={() => setSelectedMaterial(null)}
+                  className="p-2 hover:bg-slate-800 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+                <div className="min-w-0">
+                  <h2 className="font-bold truncate text-sm">{selectedMaterial.title}</h2>
+                  <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">
+                    {getDisciplineName(selectedMaterial.discipline)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => window.open(selectedMaterial.file_url, '_blank')}
+                  className="p-2 text-green-500 hover:bg-green-500/10 rounded-full transition-colors"
+                  title="Abrir em nova aba"
+                >
+                  <ExternalLink className="w-5 h-5" />
+                </button>
+              </div>
+            </header>
+            
+            <main className="flex-1 bg-slate-950 relative overflow-hidden">
+              {selectedMaterial.file_url ? (
+                <iframe 
+                  src={getEmbedUrl(selectedMaterial.file_url)} 
+                  className="w-full h-full border-none"
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                ></iframe>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-slate-500">
+                  <FileText className="w-16 h-16 mb-4 opacity-20" />
+                  <p>Visualização não disponível</p>
+                </div>
+              )}
+            </main>
+
+            <footer className="p-4 bg-slate-900 border-t border-slate-800 flex gap-3">
+              <button 
+                onClick={() => window.open(selectedMaterial.file_url, '_blank')}
+                className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-sm"
+              >
+                <Download className="w-4 h-4" /> Baixar Arquivo
+              </button>
+              <button 
+                onClick={() => setSelectedMaterial(null)}
+                className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl text-sm"
+              >
+                Fechar
+              </button>
+            </footer>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
