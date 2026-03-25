@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useMounted } from '@/hooks/useMounted';
+import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { Toast } from '@/components/Toast';
 

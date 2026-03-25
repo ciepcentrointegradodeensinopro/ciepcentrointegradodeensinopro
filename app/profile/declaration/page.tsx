@@ -80,7 +80,7 @@ export default function EnrollmentDeclarationPage() {
                   />
                 )}
               </div>
-              <h1 className="text-2xl font-black uppercase tracking-tighter">Ciep Centro Integrado de Ensino</h1>
+              <h1 className="text-2xl font-black uppercase tracking-tighter">Ciep Centro Integrado de Ensino Profissionalizante</h1>
               <p className="text-sm text-slate-500 font-bold uppercase tracking-widest mt-1">Excelência em Educação Profissional</p>
             </div>
 
@@ -99,8 +99,8 @@ export default function EnrollmentDeclarationPage() {
               </p>
 
               <p>
-                Informamos ainda que o referido curso possui modalidade presencial/híbrida e o aluno mantém status de 
-                <span className="font-bold uppercase text-green-700"> {profile?.status === 'active' ? 'Ativo' : 'Pendente'}</span> 
+                Informamos ainda que o referido curso possui modalidade presencial e o aluno mantém status de 
+                <span className="font-bold uppercase text-green-700 tracking-[0.2em]"> {profile?.status === 'active' ? 'Ativo' : 'Pendente'}</span> 
                 em nossos registros acadêmicos até a presente data.
               </p>
 
@@ -112,26 +112,26 @@ export default function EnrollmentDeclarationPage() {
             {/* Document Footer */}
             <div className="mt-20">
               <div className="flex flex-col items-center text-center mb-12">
-                <p className="mb-12">Araruama - RJ, {formattedDate}.</p>
+                <p className="mb-12">Barbacena - MG, {formattedDate}.</p>
                 
                 <div className="w-64 border-t border-black pt-2">
                   <p className="font-bold text-sm uppercase">Secretaria Acadêmica</p>
-                  <p className="text-xs text-slate-500">Ciep Centro Integrado de Ensino</p>
+                  <p className="text-xs text-slate-500">Ciep Centro Integrado de Ensino Profissionalizante</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4 pt-8 border-t border-slate-100 text-[10px] text-slate-400 uppercase font-bold tracking-tighter">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-3 h-3" />
-                  <span>Araruama, Rio de Janeiro</span>
+                  <span>Barbacena, Minas Gerais</span>
                 </div>
                 <div className="flex items-center gap-2 justify-center">
                   <Phone className="w-3 h-3" />
-                  <span>(22) 99999-9999</span>
+                  <span>(32) 3333-6751</span>
                 </div>
                 <div className="flex items-center gap-2 justify-end">
                   <Mail className="w-3 h-3" />
-                  <span>contato@ciep.edu.br</span>
+                  <span>contato@cieptreinamentos.com.br</span>
                 </div>
               </div>
             </div>
