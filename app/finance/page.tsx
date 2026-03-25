@@ -28,13 +28,19 @@ export default function FinancePage() {
     type: 'success'
   });
 
+  React.useEffect(() => {
+    if (!authLoading && !isAdmin) {
+      router.push('/dashboard');
+    } else if (!authLoading && isAdmin) {
+      fetchData();
+    }
+  }, [authLoading, isAdmin, router, fetchData]);
+
   const fetchData = React.useCallback(async () => {
+    if (!isAdmin) return;
+    
     let query = supabase.from('payments').select('*, profiles(full_name)');
     
-    if (!isAdmin) {
-      query = query.eq('student_id', profile.id);
-    }
-
     const { data: paymentsData, error } = await query.order('due_date', { ascending: false });
 
     if (!error) {
@@ -45,7 +51,7 @@ export default function FinancePage() {
       setTotalOpen(open);
     }
     setLoading(false);
-  }, [profile, isAdmin]);
+  }, [isAdmin]);
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('payments').delete().eq('id', id);

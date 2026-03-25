@@ -195,8 +195,11 @@ export default function UploadMaterialPage() {
     try {
       console.log('UploadMaterialPage: Publishing material...', { title, category, discipline });
       
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado.');
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError || !authData?.user) {
+        throw new Error(authError?.message || 'Usuário não autenticado.');
+      }
+      const user = authData.user;
 
       const { error } = await supabase.from('materials').insert({
         title,

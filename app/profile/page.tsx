@@ -71,7 +71,7 @@ export default function ProfilePage() {
     { label: 'Informações da Conta', icon: User, href: '#' },
     { label: 'Notificações', icon: Bell, href: '#' },
     { label: 'Privacidade e Segurança', icon: Lock, href: '#' },
-    { label: 'Financeiro - Boletos', icon: CreditCard, href: '/finance' },
+    ...(isAdmin ? [{ label: 'Financeiro - Boletos', icon: CreditCard, href: '/finance' }] : []),
     { label: 'Material', icon: BookOpen, href: '/materials' },
     { label: 'Carteira de estudante', icon: CreditCard, href: '/id-card' },
     { label: 'Declaração de Matrícula', icon: FileText, href: '/profile/declaration' },

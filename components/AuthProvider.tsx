@@ -49,6 +49,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
+    const clearSession = async () => {
+      console.log('AuthProvider: Clearing session due to auth error');
+      try {
+        // Try to sign out to clear server-side session if possible
+        await supabase.auth.signOut().catch(() => {});
+        
+        // Manually clear local storage for this client
+        if (typeof window !== 'undefined') {
+          const keys = Object.keys(localStorage);
+          keys.forEach(key => {
+            if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+              localStorage.removeItem(key);
+            }
+          });
+        }
+      } catch (e) {}
+      
+      setUser(null);
+      setProfile(null);
+      setLoading(false);
+      
+      const publicRoutes = ['/', '/register', '/forgot-password', '/reset-password'];
+      if (pathnameRef.current && !publicRoutes.includes(pathnameRef.current)) {
+        router.push('/');
+      }
+    };
+
     // Global error listener for Supabase AuthApiErrors
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       const error = event.reason;
@@ -56,6 +83,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         error.name === 'AuthApiError' || 
         error.message?.includes('Refresh Token Not Found') ||
         error.message?.includes('invalid_grant') ||
+        error.message?.includes('refresh_token_not_found') ||
         error.status === 400 ||
         error.status === 401
       );
@@ -64,31 +92,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('AuthProvider: Global AuthApiError caught', error.message);
         event.preventDefault();
         event.stopPropagation();
-        
-        const clearSession = async () => {
-          try {
-            // Try to sign out to clear server-side session if possible
-            await supabase.auth.signOut().catch(() => {});
-            
-            // Manually clear local storage for this client
-            const keys = Object.keys(localStorage);
-            keys.forEach(key => {
-              if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
-                localStorage.removeItem(key);
-              }
-            });
-          } catch (e) {}
-          
-          setUser(null);
-          setProfile(null);
-          setLoading(false);
-          
-          const publicRoutes = ['/', '/register', '/forgot-password', '/reset-password'];
-          if (pathnameRef.current && !publicRoutes.includes(pathnameRef.current)) {
-            router.push('/');
-          }
-        };
-        
         clearSession();
       }
     };
@@ -141,14 +144,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (sessionError) {
           console.error('AuthProvider: getSession error', sessionError.message);
           // If it's a refresh token error, we MUST clear the session
-          if (sessionError.message?.includes('Refresh Token') || sessionError.status === 400 || sessionError.status === 401) {
-             await supabase.auth.signOut().catch(() => {});
-             const keys = Object.keys(localStorage);
-             keys.forEach(key => {
-               if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
-                 localStorage.removeItem(key);
-               }
-             });
+          if (
+            sessionError.message?.includes('Refresh Token') || 
+            sessionError.message?.includes('refresh_token_not_found') ||
+            sessionError.status === 400 || 
+            sessionError.status === 401
+          ) {
+             await clearSession();
+             return;
           }
           throw sessionError;
         }
@@ -166,8 +169,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error: any) {
         console.error('AuthProvider: Initialization error', error);
-        setUser(null);
-        setProfile(null);
+        // On any auth-related error during init, clear session
+        if (error?.message?.includes('Refresh Token') || error?.status === 400 || error?.status === 401) {
+          await clearSession();
+        } else {
+          setUser(null);
+          setProfile(null);
+        }
       } finally {
         console.log('AuthProvider: Initialization finally block');
         setLoading(false);

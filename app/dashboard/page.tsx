@@ -59,12 +59,10 @@ export default function Dashboard() {
       } else {
         // Fetch student stats
         const { count: materialCount } = await supabase.from('materials').select('*', { count: 'exact', head: true });
-        const { count: myPendingPayments } = await supabase.from('payments').select('*', { count: 'exact', head: true }).eq('student_id', profile?.id).eq('status', 'pending');
 
         setStats([
           { label: 'MEUS CURSOS', value: 1, trend: 'Ativo', icon: BookOpen, color: 'text-green-500', bg: 'bg-green-500/10' },
           { label: 'MATERIAIS DISPONÍVEIS', value: materialCount || 0, trend: 'Novos', icon: FileText, iconColor: 'text-green-500', bg: 'bg-green-500/10' },
-          { label: 'MENSALIDADES EM ABERTO', value: myPendingPayments || 0, trend: 'Pendente', icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-500/10' },
         ]);
 
         const { data: myActivities } = await supabase
@@ -120,7 +118,6 @@ export default function Dashboard() {
     { label: 'Meus Materiais', sub: 'Apostilas e vídeos', icon: BookOpen, href: '/materials', color: 'bg-green-500' },
     { label: 'Minha Carteira', sub: 'ID Estudantil', icon: BadgeCheck, href: '/id-card', color: 'bg-green-500' },
     { label: 'Declaração de Matrícula', sub: 'Emitir documento', icon: FileText, href: '/profile/declaration', color: 'bg-green-500' },
-    { label: 'Financeiro', sub: 'Mensalidades e boletos', icon: DollarSign, href: '/finance', color: 'bg-green-500' },
     { label: 'Meu Perfil', sub: 'Dados cadastrais', icon: User, href: '/profile', color: 'bg-green-500' },
   ];
 
