@@ -77,6 +77,7 @@ export default function EnrollmentDeclarationPage() {
                     fill
                     className="object-contain"
                     priority
+                    referrerPolicy="no-referrer"
                   />
                 )}
               </div>
