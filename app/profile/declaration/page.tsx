@@ -72,7 +72,7 @@ export default function EnrollmentDeclarationPage() {
               <div className="size-24 relative mb-4">
                 {mounted && (
                   <Image 
-                    src="https://drive.google.com/uc?id=1hCUwRjRdjfohV4MliKVsC8Z7Ozty2308"
+                    src="https://lh3.googleusercontent.com/d/1hCUwRjRdjfohV4MliKVsC8Z7Ozty2308"
                     alt="Ciep Logo"
                     fill
                     className="object-contain"
@@ -80,7 +80,7 @@ export default function EnrollmentDeclarationPage() {
                   />
                 )}
               </div>
-              <h1 className="text-2xl font-black uppercase tracking-tighter">Ciep Centro Integrado de Ensino Profissionalizante</h1>
+              <h1 className="text-2xl font-black uppercase tracking-tighter">Ciep - Centro Integrado de Ensino Profissionalizante</h1>
               <p className="text-sm text-slate-500 font-bold uppercase tracking-widest mt-1">Excelência em Educação Profissional</p>
             </div>
 
@@ -99,8 +99,8 @@ export default function EnrollmentDeclarationPage() {
               </p>
 
               <p>
-                Informamos ainda que o referido curso possui modalidade presencial e o aluno mantém status de 
-                <span className="font-bold uppercase text-green-700 tracking-[0.2em]"> {profile?.status === 'active' ? 'Ativo' : 'Pendente'}</span> 
+                Informamos ainda que o referido curso possui modalidade somente presencial e o aluno mantém status de 
+                <span className="font-bold uppercase text-green-700 tracking-[0.5em]"> {profile?.status === 'active' ? 'A T I V O' : 'P E N D E N T E'}</span> 
                 em nossos registros acadêmicos até a presente data.
               </p>
 
@@ -116,14 +116,14 @@ export default function EnrollmentDeclarationPage() {
                 
                 <div className="w-64 border-t border-black pt-2">
                   <p className="font-bold text-sm uppercase">Secretaria Acadêmica</p>
-                  <p className="text-xs text-slate-500">Ciep Centro Integrado de Ensino Profissionalizante</p>
+                  <p className="text-xs text-slate-500">Ciep - Centro Integrado de Ensino Profissionalizante</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4 pt-8 border-t border-slate-100 text-[10px] text-slate-400 uppercase font-bold tracking-tighter">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-3 h-3" />
-                  <span>Barbacena, Minas Gerais</span>
+                  <span>Barbacena-mg</span>
                 </div>
                 <div className="flex items-center gap-2 justify-center">
                   <Phone className="w-3 h-3" />

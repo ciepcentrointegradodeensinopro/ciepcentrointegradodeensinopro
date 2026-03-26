@@ -13,15 +13,22 @@ import { ConfirmationModal } from '@/components/ConfirmationModal';
 
 import { useAuth } from '@/components/AuthProvider';
 import { useMounted } from '@/hooks/useMounted';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 
 import Image from 'next/image';
 
 function StudentsContent() {
+  const router = useRouter();
   const { user: currentUser, isAdmin, loading: authLoading } = useAuth();
   const mounted = useMounted();
   const searchParams = useSearchParams();
+
+  React.useEffect(() => {
+    if (!authLoading && !isAdmin) {
+      router.push('/dashboard');
+    }
+  }, [authLoading, isAdmin, router]);
   const [users, setUsers] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState('');

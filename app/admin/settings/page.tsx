@@ -16,7 +16,7 @@ export default function AdminSettingsPage() {
   const { isAdmin, loading: authLoading, signOut } = useAuth();
   const [loading, setLoading] = React.useState(false);
   const [showSuccess, setShowSuccess] = React.useState(false);
-  const [schoolName, setSchoolName] = React.useState('CiepApp • Sistema de Gestão Politécnica');
+  const [schoolName, setSchoolName] = React.useState('Ciep - Centro Integrado de Ensino Profissionalizante');
 
   if (!authLoading && !isAdmin) {
     router.push('/dashboard');

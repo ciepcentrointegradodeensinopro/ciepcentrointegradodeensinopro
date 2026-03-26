@@ -5,13 +5,21 @@ import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { BookOpen, Plus, Trash2, Edit2, Save, X } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { Toast } from '@/components/Toast';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 
 export default function DisciplinesPage() {
+  const router = useRouter();
   const { isAdmin, loading: authLoading } = useAuth();
+
+  React.useEffect(() => {
+    if (!authLoading && !isAdmin) {
+      router.push('/dashboard');
+    }
+  }, [authLoading, isAdmin, router]);
   const [disciplines, setDisciplines] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [newDiscipline, setNewDiscipline] = React.useState({ name: '', slug: '' });

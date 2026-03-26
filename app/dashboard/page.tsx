@@ -128,7 +128,7 @@ export default function Dashboard() {
           <div className="size-10 relative">
             {mounted && (
               <Image 
-                src="https://drive.google.com/uc?id=1hCUwRjRdjfohV4MliKVsC8Z7Ozty2308"
+                src="https://lh3.googleusercontent.com/d/1hCUwRjRdjfohV4MliKVsC8Z7Ozty2308"
                 alt="Ciep Logo"
                 fill
                 className="object-contain"
@@ -136,7 +136,7 @@ export default function Dashboard() {
               />
             )}
           </div>
-          <span className="text-xl font-bold">Ciep<span className="text-green-500">Gestão</span></span>
+          <span className="text-xl font-bold">Ciep - Centro Integrado de Ensino Profissionalizante</span>
         </div>
         <div className="flex items-center gap-4">
           <button 

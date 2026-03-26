@@ -28,14 +28,6 @@ export default function FinancePage() {
     type: 'success'
   });
 
-  React.useEffect(() => {
-    if (!authLoading && !isAdmin) {
-      router.push('/dashboard');
-    } else if (!authLoading && isAdmin) {
-      fetchData();
-    }
-  }, [authLoading, isAdmin, router, fetchData]);
-
   const fetchData = React.useCallback(async () => {
     if (!isAdmin) return;
     
@@ -52,6 +44,14 @@ export default function FinancePage() {
     }
     setLoading(false);
   }, [isAdmin]);
+
+  React.useEffect(() => {
+    if (!authLoading && !isAdmin) {
+      router.push('/dashboard');
+    } else if (!authLoading && isAdmin) {
+      fetchData();
+    }
+  }, [authLoading, isAdmin, router, fetchData]);
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('payments').delete().eq('id', id);

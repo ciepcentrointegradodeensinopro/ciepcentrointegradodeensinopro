@@ -21,6 +21,8 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 });
 
+const adminEmails = ['ciepcentrointegradodeensinopro@gmail.com', 'test@gmail.com'];
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
@@ -113,7 +115,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         // Auto-upgrade admin role if email matches
-        const adminEmails = ['ciepcentrointegradodeensinopro@gmail.com', 'test@gmail.com'];
         if (userEmail && adminEmails.includes(userEmail) && data.role !== 'admin') {
           console.log('AuthProvider: Auto-upgrading admin role in database');
           const { data: updatedData, error: updateError } = await supabase
@@ -223,7 +224,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [user, loading, pathname, router]);
 
-  const adminEmails = ['ciepcentrointegradodeensinopro@gmail.com', 'test@gmail.com'];
   const isAdmin = profile?.role === 'admin' || (user?.email && adminEmails.includes(user.email));
 
   if (!isSupabaseConfigured) {
@@ -236,7 +236,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           <div className="space-y-2">
             <h1 className="text-2xl font-bold text-white">Configuração Necessária</h1>
             <p className="text-slate-400">
-              Para utilizar o CiepApp, você precisa configurar sua conexão com o Supabase.
+              Para utilizar o sistema, você precisa configurar sua conexão com o Supabase.
             </p>
           </div>
           <div className="bg-slate-950 rounded-xl p-4 text-left space-y-3 border border-slate-800">

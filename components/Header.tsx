@@ -31,7 +31,7 @@ export function Header({ title, showBack = true, rightAction }: HeaderProps) {
           <div className="size-8 relative">
             {mounted && (
               <Image 
-                src="https://drive.google.com/uc?id=1hCUwRjRdjfohV4MliKVsC8Z7Ozty2308"
+                src="https://lh3.googleusercontent.com/d/1hCUwRjRdjfohV4MliKVsC8Z7Ozty2308"
                 alt="Ciep Logo"
                 fill
                 className="object-contain"

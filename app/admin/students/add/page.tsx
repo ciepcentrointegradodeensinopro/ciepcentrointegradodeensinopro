@@ -15,7 +15,13 @@ import Image from 'next/image';
 
 export default function AddStudentPage() {
   const router = useRouter();
-  const { profile, loading: authLoading } = useAuth();
+  const { isAdmin, loading: authLoading, profile } = useAuth();
+
+  React.useEffect(() => {
+    if (!authLoading && !isAdmin) {
+      router.push('/dashboard');
+    }
+  }, [authLoading, isAdmin, router]);
   const mounted = useMounted();
   const [isActive, setIsActive] = React.useState(true);
   const [isAdminRole, setIsAdminRole] = React.useState(false);

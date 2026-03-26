@@ -45,7 +45,7 @@ export default function IDCardPage() {
                 <School className="text-green-500 w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider">CiepGestão Politécnica</h3>
+                <h3 className="text-sm font-bold uppercase tracking-wider">Ciep - Centro Integrado de Ensino Profissionalizante</h3>
                 <p className="text-green-500/70 text-[10px] font-bold uppercase tracking-widest">Identidade Estudantil Digital</p>
               </div>
             </div>

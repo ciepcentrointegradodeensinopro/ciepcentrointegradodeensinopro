@@ -65,14 +65,14 @@ export default function LoginPage() {
           <div className="text-green-500 flex size-12 items-center justify-center rounded-xl bg-green-500/10">
             <LogIn className="w-8 h-8" />
           </div>
-          <h2 className="text-slate-100 text-xl font-bold pl-4">CiepApp</h2>
+          <h2 className="text-slate-100 text-xl font-bold pl-4">Ciep - Centro Integrado de Ensino Profissionalizante</h2>
         </div>
 
         {/* Hero Image */}
         <div className="px-6 pt-4">
           <div className="w-full h-[240px] flex items-center justify-center rounded-xl bg-slate-800/50 overflow-hidden relative">
             <Image 
-              src="https://drive.google.com/uc?id=1hCUwRjRdjfohV4MliKVsC8Z7Ozty2308"
+              src="https://lh3.googleusercontent.com/d/1hCUwRjRdjfohV4MliKVsC8Z7Ozty2308"
               alt="Ciep Logo"
               fill
               className="object-contain p-2"
