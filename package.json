@@ -5,9 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint .",
-    "clean": "next clean"
+    "start": "next start"
   },
   "dependencies": {
     "@google/genai": "^1.17.0",
