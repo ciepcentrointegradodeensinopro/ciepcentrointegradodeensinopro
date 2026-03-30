@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { CheckCircle2, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface ToastProps {
   message: string;

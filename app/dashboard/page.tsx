@@ -3,14 +3,16 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { Users, FileText, AlertCircle, Plus, Upload, DollarSign, Settings, ChevronRight, School, Bell, User, BookOpen, BadgeCheck, LogIn } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Users, FileText, AlertCircle, Plus, Upload, DollarSign, Settings, ChevronRight, School, Bell, User, BookOpen, BadgeCheck, LogIn, AlertTriangle } from 'lucide-react';
+import { motion } from 'motion/react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { useMounted } from '@/hooks/useMounted';
+import { format, addDays, isAfter, parseISO, differenceInDays } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 import Image from 'next/image';
 
@@ -20,13 +22,12 @@ export default function Dashboard() {
   const [loading, setLoading] = React.useState(true);
   const [stats, setStats] = React.useState<any[]>([]);
   const [activities, setActivities] = React.useState<any[]>([]);
+  const [cardValidity, setCardValidity] = React.useState<{ isExpired: boolean, daysRemaining: number } | null>(null);
   const router = useRouter();
 
   const fetchData = React.useCallback(async () => {
     console.log('Dashboard: fetchData called', { profileId: profile?.id, isAdmin });
     
-    // For students, we need a profile. For admin, we can proceed even without a profile record
-    // as long as the email matches.
     if (!profile && !isAdmin) {
       console.log('Dashboard: No profile and not admin, stopping fetch');
       setLoading(false);
@@ -35,7 +36,6 @@ export default function Dashboard() {
     
     setLoading(true);
 
-    // Safety timeout
     const timeoutId = setTimeout(() => {
       console.log('Dashboard: fetchData safety timeout reached');
       setLoading(false);
@@ -44,7 +44,6 @@ export default function Dashboard() {
     try {
       console.log('Dashboard: Fetching data. IsAdmin:', isAdmin);
       if (isAdmin) {
-        // Fetch admin stats
         const { count: studentCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student');
         const { count: materialCount } = await supabase.from('materials').select('*', { count: 'exact', head: true });
         const { count: pendingPayments } = await supabase.from('payments').select('*', { count: 'exact', head: true }).eq('status', 'pending');
@@ -63,12 +62,29 @@ export default function Dashboard() {
         
         setActivities(activitiesData || []);
       } else {
-        // Fetch student stats
         const { count: materialCount } = await supabase.from('materials').select('*', { count: 'exact', head: true });
+
+        // Calculate card validity
+        const baseDate = profile?.card_valid_until 
+          ? parseISO(profile.card_valid_until) 
+          : addDays(parseISO(profile?.created_at || new Date().toISOString()), 30);
+        
+        const now = new Date();
+        const isExpired = isAfter(now, baseDate);
+        const daysRemaining = Math.max(0, Math.ceil((baseDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+        setCardValidity({ isExpired, daysRemaining });
 
         setStats([
           { label: 'MEUS CURSOS', value: 1, trend: 'Ativo', icon: BookOpen, color: 'text-green-500', bg: 'bg-green-500/10' },
           { label: 'MATERIAIS DISPONÍVEIS', value: materialCount || 0, trend: 'Novos', icon: FileText, iconColor: 'text-green-500', bg: 'bg-green-500/10' },
+          { 
+            label: 'STATUS DA CARTEIRA', 
+            value: isExpired ? 'Expirada' : 'Ativa', 
+            trend: isExpired ? 'Renovar' : `${daysRemaining} dias`, 
+            icon: BadgeCheck, 
+            color: isExpired ? 'text-red-500' : 'text-green-500', 
+            bg: isExpired ? 'bg-red-500/10' : 'bg-green-500/10' 
+          },
         ]);
 
         const { data: myActivities } = await supabase
@@ -181,6 +197,47 @@ export default function Dashboard() {
 
         {/* Stats */}
         <div className="space-y-4">
+          {!isAdmin && cardValidity && (cardValidity.isExpired || cardValidity.daysRemaining <= 5) && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className={cn(
+                "p-4 rounded-2xl flex items-center gap-4 border",
+                cardValidity.isExpired 
+                  ? "bg-red-500/10 border-red-500/30 text-red-500" 
+                  : "bg-amber-500/10 border-amber-500/30 text-amber-500"
+              )}
+            >
+              <div className={cn(
+                "p-2 rounded-xl",
+                cardValidity.isExpired ? "bg-red-500/20" : "bg-amber-500/20"
+              )}>
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-sm">
+                  {cardValidity.isExpired ? 'Sua carteira expirou!' : 'Sua carteira está vencendo!'}
+                </h3>
+                <p className="text-[10px] font-medium opacity-80 uppercase tracking-wider">
+                  {cardValidity.isExpired 
+                    ? 'Renove agora para continuar utilizando os benefícios.' 
+                    : `Expira em ${cardValidity.daysRemaining} ${cardValidity.daysRemaining === 1 ? 'dia' : 'dias'}.`}
+                </p>
+              </div>
+              <Link 
+                href="/id-card"
+                className={cn(
+                  "px-4 py-2 rounded-lg text-xs font-bold transition-colors",
+                  cardValidity.isExpired 
+                    ? "bg-red-500 text-white hover:bg-red-600" 
+                    : "bg-amber-500 text-slate-950 hover:bg-amber-600"
+                )}
+              >
+                Renovar
+              </Link>
+            </motion.div>
+          )}
+
           {stats.map((stat, i) => (
             <motion.div 
               key={i}

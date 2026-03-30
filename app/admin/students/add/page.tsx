@@ -3,7 +3,7 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { User, Mail, Hash, School, Save, X, Camera, Edit3, CheckCircle2, Lock, Eye, EyeOff } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';

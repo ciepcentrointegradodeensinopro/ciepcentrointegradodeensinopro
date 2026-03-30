@@ -4,7 +4,7 @@ import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { FileText, Download, Printer, ChevronLeft, ShieldCheck, Calendar, MapPin, Phone, Mail } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { useAuth } from '@/components/AuthProvider';
 import { useMounted } from '@/hooks/useMounted';
 import { cn } from '@/lib/utils';

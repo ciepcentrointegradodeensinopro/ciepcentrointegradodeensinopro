@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Mail, ArrowLeft, Send, CheckCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { supabase } from '@/lib/supabase';
 
 export default function ForgotPasswordPage() {

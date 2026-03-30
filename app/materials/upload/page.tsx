@@ -4,7 +4,7 @@ import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { CloudUpload, FileText, BookOpen, Layers, Eye, Send, ExternalLink, Link as LinkIcon, Upload, X as CloseIcon } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';

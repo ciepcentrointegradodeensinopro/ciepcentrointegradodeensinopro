@@ -4,7 +4,7 @@ import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { User, ChevronRight, Settings, Bell, Lock, CreditCard, BookOpen, LogOut, Edit2, FileText } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';

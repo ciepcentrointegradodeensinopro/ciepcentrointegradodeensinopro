@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Lock, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 

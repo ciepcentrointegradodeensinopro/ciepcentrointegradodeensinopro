@@ -4,7 +4,7 @@ import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { ArrowLeft, Search, Plus, Eye, Edit2, Trash2, Shield } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';

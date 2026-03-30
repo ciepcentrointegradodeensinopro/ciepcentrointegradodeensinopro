@@ -38,11 +38,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     console.log('AuthProvider: Initializing...', { isSupabaseConfigured });
     
+    let isMounted = true;
+
     // Safety timeout to prevent infinite loading
     const timeout = setTimeout(() => {
-      console.log('AuthProvider: Safety timeout reached, forcing loading false');
-      setLoading(false);
-    }, 3000);
+      if (isMounted) {
+        console.log('AuthProvider: Safety timeout reached, forcing loading false');
+        setLoading(false);
+      }
+    }, 5000);
 
     if (!isSupabaseConfigured) {
       console.log('AuthProvider: Supabase not configured');
@@ -52,12 +56,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const clearSession = async () => {
+      if (!isMounted) return;
       console.log('AuthProvider: Clearing session due to auth error');
       try {
-        // Try to sign out to clear server-side session if possible
         await supabase.auth.signOut().catch(() => {});
-        
-        // Manually clear local storage for this client
         if (typeof window !== 'undefined') {
           const keys = Object.keys(localStorage);
           keys.forEach(key => {
@@ -68,13 +70,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (e) {}
       
-      setUser(null);
-      setProfile(null);
-      setLoading(false);
-      
-      const publicRoutes = ['/', '/register', '/forgot-password', '/reset-password'];
-      if (pathnameRef.current && !publicRoutes.includes(pathnameRef.current)) {
-        router.push('/');
+      if (isMounted) {
+        setUser(null);
+        setProfile(null);
+        setLoading(false);
+        
+        const publicRoutes = ['/', '/register', '/forgot-password', '/reset-password'];
+        if (pathnameRef.current && !publicRoutes.includes(pathnameRef.current)) {
+          router.push('/');
+        }
       }
     };
 
@@ -139,12 +143,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initialize = async () => {
       try {
         console.log('AuthProvider: Starting initialization');
-        // Use getSession but catch errors specifically
         const { data, error: sessionError } = await supabase.auth.getSession();
         
+        if (!isMounted) return;
+
         if (sessionError) {
           console.error('AuthProvider: getSession error', sessionError.message);
-          // If it's a refresh token error, we MUST clear the session
           if (
             sessionError.message?.includes('Refresh Token') || 
             sessionError.message?.includes('refresh_token_not_found') ||
@@ -162,7 +166,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.log('AuthProvider: Initial session found', session.user.id);
           setUser(session.user);
           const profileData = await fetchProfile(session.user.id, session.user.email);
-          setProfile(profileData);
+          if (isMounted) setProfile(profileData);
         } else {
           console.log('AuthProvider: No initial session');
           setUser(null);
@@ -170,51 +174,60 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error: any) {
         console.error('AuthProvider: Initialization error', error);
-        // On any auth-related error during init, clear session
-        if (error?.message?.includes('Refresh Token') || error?.status === 400 || error?.status === 401) {
-          await clearSession();
-        } else {
-          setUser(null);
-          setProfile(null);
+        if (isMounted) {
+          if (error?.message?.includes('Refresh Token') || error?.status === 400 || error?.status === 401) {
+            await clearSession();
+          } else {
+            setUser(null);
+            setProfile(null);
+          }
         }
       } finally {
-        console.log('AuthProvider: Initialization finally block');
-        setLoading(false);
-        clearTimeout(timeout);
+        if (isMounted) {
+          console.log('AuthProvider: Initialization finally block');
+          setLoading(false);
+          clearTimeout(timeout);
+        }
       }
     };
 
     initialize();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('AuthProvider: onAuthStateChange', event, session?.user?.id);
       
+      if (!isMounted) return;
+
       try {
         if (event === 'SIGNED_OUT') {
           setUser(null);
           setProfile(null);
         } else if (session?.user) {
           setUser(session.user);
-          // Only fetch profile if it's not already set or if it's a login event
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
             const profileData = await fetchProfile(session.user.id, session.user.email);
-            setProfile(profileData);
+            if (isMounted) setProfile(profileData);
           }
         }
       } catch (err) {
         console.error('AuthProvider: onAuthStateChange error', err);
       } finally {
-        setLoading(false);
-        clearTimeout(timeout);
+        if (isMounted) {
+          setLoading(false);
+          clearTimeout(timeout);
+        }
       }
     });
 
     return () => {
-      subscription.unsubscribe();
+      isMounted = false;
+      if (authListener?.subscription) {
+        authListener.subscription.unsubscribe();
+      }
       clearTimeout(timeout);
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };
-  }, [router]);
+  }, [router, pathname]);
 
   // Basic route protection
   useEffect(() => {
