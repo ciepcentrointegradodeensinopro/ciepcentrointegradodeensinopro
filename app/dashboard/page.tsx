@@ -35,6 +35,12 @@ export default function Dashboard() {
     
     setLoading(true);
 
+    // Safety timeout
+    const timeoutId = setTimeout(() => {
+      console.log('Dashboard: fetchData safety timeout reached');
+      setLoading(false);
+    }, 5000);
+
     try {
       console.log('Dashboard: Fetching data. IsAdmin:', isAdmin);
       if (isAdmin) {
@@ -79,6 +85,7 @@ export default function Dashboard() {
       console.error('Error fetching dashboard data:', err);
     } finally {
       console.log('Dashboard: Setting loading to false');
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   }, [profile, isAdmin]);

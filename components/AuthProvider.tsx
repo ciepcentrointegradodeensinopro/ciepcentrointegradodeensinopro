@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const timeout = setTimeout(() => {
       console.log('AuthProvider: Safety timeout reached, forcing loading false');
       setLoading(false);
-    }, 8000);
+    }, 3000);
 
     if (!isSupabaseConfigured) {
       console.log('AuthProvider: Supabase not configured');
@@ -189,22 +189,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('AuthProvider: onAuthStateChange', event, session?.user?.id);
       
-      if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setProfile(null);
-        setLoading(false);
-      } else if (session?.user) {
-        setUser(session.user);
-        // Only fetch profile if it's not already set or if it's a login event
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-          const profileData = await fetchProfile(session.user.id, session.user.email);
-          setProfile(profileData);
+      try {
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setProfile(null);
+        } else if (session?.user) {
+          setUser(session.user);
+          // Only fetch profile if it's not already set or if it's a login event
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+            const profileData = await fetchProfile(session.user.id, session.user.email);
+            setProfile(profileData);
+          }
         }
+      } catch (err) {
+        console.error('AuthProvider: onAuthStateChange error', err);
+      } finally {
         setLoading(false);
-      } else {
-        setLoading(false);
+        clearTimeout(timeout);
       }
-      clearTimeout(timeout);
     });
 
     return () => {

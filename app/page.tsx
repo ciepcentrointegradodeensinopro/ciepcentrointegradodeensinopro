@@ -3,7 +3,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { Mail, Lock, LogIn, HelpCircle, Info, Eye, EyeOff } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
@@ -55,9 +54,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 font-sans flex items-center justify-center p-4">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+      <div 
         className="w-full max-w-[480px] bg-slate-900 shadow-2xl rounded-2xl overflow-hidden border border-slate-800"
       >
         {/* Logo Section */}
@@ -194,7 +191,7 @@ export default function LoginPage() {
             </button>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
