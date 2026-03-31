@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('AuthProvider: Safety timeout reached, forcing loading false');
         setLoading(false);
       }
-    }, 5000);
+    }, 3000); // Reduced to 3 seconds for better UX
 
     if (!isSupabaseConfigured) {
       console.log('AuthProvider: Supabase not configured');
@@ -142,6 +142,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initialize = async () => {
       try {
         console.log('AuthProvider: Starting initialization');
+        
+        // Check if we are in a browser environment
+        if (typeof window === 'undefined') {
+          console.log('AuthProvider: Server-side rendering, skipping initialization');
+          setLoading(false);
+          return;
+        }
+
         const { data, error: sessionError } = await supabase.auth.getSession();
         
         if (!isMounted) return;
@@ -240,6 +248,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const isAdmin = profile?.role === 'admin' || (user?.email && adminEmails.includes(user.email));
 
+  const signOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setProfile(null);
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   if (!isSupabaseConfigured) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
@@ -272,16 +291,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  const signOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      setUser(null);
-      setProfile(null);
-      router.push('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mb-6"></div>
+        <p className="text-slate-400 text-sm font-medium animate-pulse">Iniciando sistema...</p>
+        <button 
+          onClick={() => setLoading(false)}
+          className="mt-8 text-xs text-slate-600 hover:text-slate-400 underline transition-colors"
+        >
+          Demorando muito? Clique aqui para forçar o carregamento
+        </button>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{ user, profile, loading, isAdmin, signOut }}>

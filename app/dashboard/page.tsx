@@ -39,7 +39,7 @@ export default function Dashboard() {
     const timeoutId = setTimeout(() => {
       console.log('Dashboard: fetchData safety timeout reached');
       setLoading(false);
-    }, 5000);
+    }, 3000); // Reduced to 3 seconds for better UX
 
     try {
       console.log('Dashboard: Fetching data. IsAdmin:', isAdmin);
@@ -126,8 +126,15 @@ export default function Dashboard() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mb-6"></div>
+        <p className="text-slate-400 text-sm font-medium animate-pulse">Carregando painel...</p>
+        <button 
+          onClick={() => setLoading(false)}
+          className="mt-8 text-xs text-slate-600 hover:text-slate-400 underline transition-colors"
+        >
+          Demorando muito? Clique aqui para forçar o carregamento
+        </button>
       </div>
     );
   }

@@ -25,8 +25,19 @@ export default function LoginPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mb-6"></div>
+        <p className="text-slate-400 text-sm font-medium animate-pulse">Verificando acesso...</p>
+        <button 
+          onClick={() => {
+            // This is a hack to force loading false if AuthProvider is stuck
+            // We can't directly set AuthProvider's state, but we can try to reload
+            window.location.reload();
+          }}
+          className="mt-8 text-xs text-slate-600 hover:text-slate-400 underline transition-colors"
+        >
+          Demorando muito? Clique aqui para recarregar
+        </button>
       </div>
     );
   }

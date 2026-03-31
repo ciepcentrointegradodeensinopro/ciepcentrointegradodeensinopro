@@ -33,9 +33,9 @@ export default function RegisterPage() {
   const [emailError, setEmailError] = React.useState<string | null>(null);
 
   const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (email && !emailRegex.test(email)) {
-      setEmailError('Formato de e-mail inválido');
+      setEmailError('Por favor, insira um e-mail válido');
     } else {
       setEmailError(null);
     }
@@ -81,7 +81,7 @@ export default function RegisterPage() {
     e.preventDefault();
     
     // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(formData.email)) {
       setError('Por favor, insira um e-mail válido.');
       return;
