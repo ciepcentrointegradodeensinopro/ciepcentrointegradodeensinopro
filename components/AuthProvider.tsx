@@ -227,7 +227,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       clearTimeout(timeout);
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };
-  }, [router, pathname]);
+  }, []);
 
   // Basic route protection
   useEffect(() => {

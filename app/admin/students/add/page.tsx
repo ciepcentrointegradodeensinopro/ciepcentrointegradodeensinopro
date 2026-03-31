@@ -40,11 +40,16 @@ export default function AddStudentPage() {
   React.useEffect(() => {
     const checkConfig = async () => {
       try {
-        const res = await fetch('/api/admin/check-config');
+        const res = await fetch('/api/system/check-config');
+        if (!res.ok) {
+          console.error('Erro na resposta da API check-config:', res.status, res.statusText);
+          setConfigReady(false);
+          return;
+        }
         const data = await res.json();
         setConfigReady(data.configured);
-      } catch (e) {
-        console.error('Erro ao verificar configuração:', e);
+      } catch (e: any) {
+        console.error('Erro de rede ao verificar configuração (Failed to fetch):', e.message);
         setConfigReady(false);
       }
     };
@@ -104,21 +109,27 @@ export default function AddStudentPage() {
 
     try {
       // Call the API route to create the user in Supabase Auth and update the profile
-      const response = await fetch('/api/admin/create-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          fullName: formData.fullName,
-          role: isAdminRole ? 'admin' : 'student',
-          course: isAdminRole ? '' : formData.course,
-          status: isActive ? 'active' : 'inactive',
-          avatarUrl: avatarUrl,
-        }),
-      });
+      let response;
+      try {
+        response = await fetch('/api/system/create-user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+            fullName: formData.fullName,
+            role: isAdminRole ? 'admin' : 'student',
+            course: isAdminRole ? '' : formData.course,
+            status: isActive ? 'active' : 'inactive',
+            avatarUrl: avatarUrl,
+          }),
+        });
+      } catch (e: any) {
+        console.error('Erro de rede ao criar usuário (Failed to fetch):', e.message);
+        throw new Error('Erro de conexão com o servidor. Verifique sua internet ou se há bloqueadores de anúncios ativos.');
+      }
 
       let result;
       try {

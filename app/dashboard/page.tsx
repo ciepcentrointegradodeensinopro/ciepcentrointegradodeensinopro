@@ -276,16 +276,16 @@ export default function Dashboard() {
               <Link 
                 key={i}
                 href={item.href}
-                className="flex items-center gap-4 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl hover:bg-slate-900 transition-colors group"
+                className="flex items-center gap-4 p-4 bg-slate-900/50 border border-slate-800 rounded-2xl hover:bg-slate-800/80 hover:border-green-500/50 hover:shadow-lg hover:shadow-green-500/10 transition-all duration-300 group"
               >
-                <div className={cn("p-3 rounded-xl", item.color)}>
+                <div className={cn("p-3 rounded-xl transition-transform duration-300 group-hover:scale-110", item.color)}>
                   <item.icon className="w-6 h-6 text-white" />
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-bold">{item.label}</h3>
-                  <p className="text-xs text-slate-500">{item.sub}</p>
+                <div className="flex-1 flex flex-col justify-center">
+                  <h3 className="font-bold text-slate-100 group-hover:text-green-400 transition-colors">{item.label}</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">{item.sub}</p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-white transition-colors" />
+                <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-green-500 group-hover:translate-x-1 transition-all duration-300" />
               </Link>
             ))}
           </div>
