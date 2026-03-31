@@ -8,11 +8,6 @@ const inter = Inter({
   variable: '--font-sans',
 });
 
-export const metadata: Metadata = {
-  title: 'Ciep - Centro Integrado de Ensino Profissionalizante',
-  description: 'Sistema de gestão escolar moderno.',
-};
-
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="pt-BR" className={`${inter.variable}`}>

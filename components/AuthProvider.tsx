@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useRouter, usePathname } from 'next/navigation';
-import { AlertCircle, Settings } from 'lucide-react';
 
 interface AuthContextType {
   user: any;
@@ -246,7 +245,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
         <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center space-y-6">
           <div className="size-16 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto">
-            <AlertCircle className="w-8 h-8 text-amber-500" />
+            <span className="text-amber-500 font-bold text-2xl">!</span>
           </div>
           <div className="space-y-2">
             <h1 className="text-2xl font-bold text-white">Configuração Necessária</h1>
@@ -265,7 +264,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           </div>
           <div className="pt-4">
             <div className="flex items-center gap-2 text-xs text-slate-500 justify-center">
-              <Settings className="w-4 h-4" />
               <span>Variáveis: NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY</span>
             </div>
           </div>
