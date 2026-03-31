@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Header } from '@/components/Header';
-import { User, Mail, Hash, School, Save, X, Camera, Edit3, CheckCircle2, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Hash, School, Save, X, Camera, Edit3, CheckCircle2, Lock, Eye, EyeOff, Calendar } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -61,6 +61,7 @@ export default function AddStudentPage() {
     email: '',
     password: '',
     course: '',
+    turma: '',
   });
   const [emailError, setEmailError] = React.useState<string | null>(null);
 
@@ -122,6 +123,7 @@ export default function AddStudentPage() {
             fullName: formData.fullName,
             role: isAdminRole ? 'admin' : 'student',
             course: isAdminRole ? '' : formData.course,
+            turma: isAdminRole ? '' : formData.turma,
             status: isActive ? 'active' : 'inactive',
             avatarUrl: avatarUrl,
           }),
@@ -373,23 +375,46 @@ export default function AddStudentPage() {
             </div>
 
             {!isAdminRole && (
-              <div className="space-y-2">
-                <label className="text-slate-400 text-sm font-semibold px-1">Curso</label>
-                <div className="relative">
-                  <School className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
-                  <select 
-                    required={!isAdminRole}
-                    value={formData.course}
-                    onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-                    className="w-full pl-12 pr-10 h-14 rounded-xl border border-slate-800 bg-slate-900 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none appearance-none"
-                  >
-                    <option value="">Selecione o curso</option>
-                    <option value="Mecânica de Motos">Mecânica de Motos</option>
-                    <option value="Mecânica Automotiva">Mecânica Automotiva</option>
-                    <option value="Mecânica Elétrica">Mecânica Elétrica</option>
-                  </select>
+              <>
+                <div className="space-y-2">
+                  <label className="text-slate-400 text-sm font-semibold px-1">Curso</label>
+                  <div className="relative">
+                    <School className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+                    <select 
+                      required={!isAdminRole}
+                      value={formData.course}
+                      onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+                      className="w-full pl-12 pr-10 h-14 rounded-xl border border-slate-800 bg-slate-900 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none appearance-none"
+                    >
+                      <option value="">Selecione o curso</option>
+                      <option value="Mecânica de Motos">Mecânica de Motos</option>
+                      <option value="Mecânica Automotiva">Mecânica Automotiva</option>
+                      <option value="Mecânica Elétrica">Mecânica Elétrica</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
+
+                <div className="space-y-2">
+                  <label className="text-slate-400 text-sm font-semibold px-1">Turma (Dia da Semana)</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+                    <select 
+                      required={!isAdminRole}
+                      value={formData.turma}
+                      onChange={(e) => setFormData({ ...formData, turma: e.target.value })}
+                      className="w-full pl-12 pr-10 h-14 rounded-xl border border-slate-800 bg-slate-900 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none appearance-none"
+                    >
+                      <option value="">Selecione o dia</option>
+                      <option value="Segunda-feira">Segunda-feira</option>
+                      <option value="Terça-feira">Terça-feira</option>
+                      <option value="Quarta-feira">Quarta-feira</option>
+                      <option value="Quinta-feira">Quinta-feira</option>
+                      <option value="Sexta-feira">Sexta-feira</option>
+                      <option value="Sábado">Sábado</option>
+                    </select>
+                  </div>
+                </div>
+              </>
             )}
           </div>
 

@@ -27,6 +27,7 @@ export default function RegisterPage() {
     fullName: '',
     email: '',
     course: '',
+    classDay: '',
     password: '',
     confirmPassword: '',
   });
@@ -111,17 +112,18 @@ export default function RegisterPage() {
 
       if (authData.user) {
         const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              user_id: authData.user.id,
-              full_name: formData.fullName,
-              email: formData.email,
-              course: formData.course,
-              role: 'student',
-              avatar_url: avatarUrl,
-            },
-          ]);
+              .from('profiles')
+              .insert([
+                {
+                  user_id: authData.user.id,
+                  full_name: formData.fullName,
+                  email: formData.email,
+                  course: formData.course,
+                  class_day: formData.classDay,
+                  role: 'student',
+                  avatar_url: avatarUrl,
+                },
+              ]);
 
         if (profileError) throw profileError;
         
@@ -251,10 +253,28 @@ export default function RegisterPage() {
               onChange={(e) => setFormData({ ...formData, course: e.target.value })}
               className="w-full px-4 py-3.5 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-white outline-none appearance-none"
             >
-              <option value="">Selecione</option>
+              <option value="">Selecione o curso</option>
               <option value="Mecânica de Motos">Mecânica de Motos</option>
               <option value="Mecânica Automotiva">Mecânica Automotiva</option>
               <option value="Mecânica Elétrica">Mecânica Elétrica</option>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-slate-300 ml-1">Dia da Turma</label>
+            <select 
+              required
+              value={formData.classDay}
+              onChange={(e) => setFormData({ ...formData, classDay: e.target.value })}
+              className="w-full px-4 py-3.5 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-white outline-none appearance-none"
+            >
+              <option value="">Selecione o dia</option>
+              <option value="Segunda-feira">Segunda-feira</option>
+              <option value="Terça-feira">Terça-feira</option>
+              <option value="Quarta-feira">Quarta-feira</option>
+              <option value="Quinta-feira">Quinta-feira</option>
+              <option value="Sexta-feira">Sexta-feira</option>
+              <option value="Sábado">Sábado</option>
             </select>
           </div>
 

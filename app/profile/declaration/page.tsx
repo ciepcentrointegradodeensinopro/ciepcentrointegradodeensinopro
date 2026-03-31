@@ -3,7 +3,7 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { FileText, Download, Printer, ChevronLeft, ShieldCheck, Calendar, MapPin, Phone, Mail } from 'lucide-react';
+import { FileText, Printer, ChevronLeft, ShieldCheck, Calendar, MapPin, Phone, Mail } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAuth } from '@/components/AuthProvider';
 import { useMounted } from '@/hooks/useMounted';
@@ -46,17 +46,10 @@ export default function EnrollmentDeclarationPage() {
           <div className="flex flex-wrap gap-3 mb-8 print:hidden">
             <button 
               onClick={handlePrint}
-              className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-green-500/20 transition-all active:scale-95"
+              className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-green-500/20 transition-all active:scale-95"
             >
               <Printer className="w-5 h-5" />
               Imprimir Declaração
-            </button>
-            <button 
-              onClick={handlePrint}
-              className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95"
-            >
-              <Download className="w-5 h-5" />
-              Baixar PDF
             </button>
           </div>
 

@@ -3,7 +3,7 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { School, BadgeCheck, Download, Share2, Verified, QrCode, RefreshCw, AlertTriangle } from 'lucide-react';
+import { School, BadgeCheck, Share2, Verified, QrCode, RefreshCw, AlertTriangle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { supabase } from '@/lib/supabase';
 
@@ -195,12 +195,7 @@ export default function IDCardPage() {
               )}
               Renovar Carteira (30 dias)
             </button>
-          ) : (
-            <button className="w-full py-4 bg-green-600 hover:bg-green-500 text-slate-950 font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-green-500/20">
-              <Download className="w-5 h-5" />
-              Baixar Versão Digital
-            </button>
-          )}
+          ) : null}
           
           <button className="w-full py-4 bg-green-500/10 hover:bg-green-500/20 text-green-500 font-bold rounded-xl flex items-center justify-center gap-2 transition-all border border-green-500/30">
             <Share2 className="w-5 h-5" />
