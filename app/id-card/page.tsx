@@ -3,7 +3,7 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { School, BadgeCheck, Share2, Verified, QrCode, RefreshCw, AlertTriangle } from 'lucide-react';
+import { School, BadgeCheck, Share2, Verified, RefreshCw, AlertTriangle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { supabase } from '@/lib/supabase';
 
@@ -161,9 +161,6 @@ export default function IDCardPage() {
                     {validity.isExpired ? 'Documento Expirado' : 'Documento Ativo'}
                   </span>
                 </div>
-              </div>
-              <div className="p-2 bg-white rounded-lg">
-                <QrCode className="w-16 h-16 text-black" />
               </div>
             </div>
           </div>
