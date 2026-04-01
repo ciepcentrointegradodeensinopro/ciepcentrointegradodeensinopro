@@ -112,10 +112,12 @@ export default function AddStudentPage() {
       // Call the API route to create the user in Supabase Auth and update the profile
       let response;
       try {
+        const { data: { session } } = await supabase.auth.getSession();
         response = await fetch('/api/system/create-user', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token || ''}`,
           },
           body: JSON.stringify({
             email: formData.email,
