@@ -161,8 +161,8 @@ export default function AddStudentPage() {
       setShowSuccess(true);
       setToast({ message: 'Usuário cadastrado com sucesso!', isVisible: true, type: 'success' });
       setTimeout(() => {
-        router.push('/admin/students');
-      }, 2000);
+        router.push('/admin/students/success');
+      }, 1500);
     } catch (err: any) {
       setToast({ message: err.message || 'Erro ao salvar aluno', isVisible: true, type: 'error' });
     } finally {
@@ -193,35 +193,6 @@ export default function AddStudentPage() {
         type={toast.type}
         onClose={() => setToast({ ...toast, isVisible: false })} 
       />
-
-      {showSuccess && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-6"
-        >
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-slate-900 border border-slate-800 p-8 rounded-3xl w-full max-w-xs text-center shadow-2xl shadow-green-500/10"
-          >
-            <div className="size-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 className="w-10 h-10 text-green-500" />
-            </div>
-            <h2 className="text-2xl font-bold mb-2">Sucesso!</h2>
-            <p className="text-slate-400 text-sm mb-6">O usuário foi cadastrado corretamente no sistema.</p>
-            <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: "100%" }}
-                transition={{ duration: 1.5, ease: "linear" }}
-                className="bg-green-500 h-full"
-              />
-            </div>
-            <p className="text-[10px] text-slate-500 mt-2 uppercase tracking-widest font-bold">Redirecionando...</p>
-          </motion.div>
-        </motion.div>
-      )}
 
       <main className="flex-1 overflow-y-auto pb-32">
         <form onSubmit={handleSubmit} className="max-w-md mx-auto">
