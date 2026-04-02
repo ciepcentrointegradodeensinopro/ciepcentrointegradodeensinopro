@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<React.ReactNode>(null);
   const router = useRouter();
 
   React.useEffect(() => {
@@ -53,7 +53,20 @@ export default function LoginPage() {
         password,
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        if (authError.message.includes('Email not confirmed')) {
+          setError(
+            <div className="flex flex-col gap-1">
+              <span>E-mail não confirmado.</span>
+              <Link href={`/verify?email=${email}`} className="underline font-bold text-xs uppercase tracking-wider">
+                Verificar conta agora
+              </Link>
+            </div>
+          );
+          return;
+        }
+        throw authError;
+      }
 
       router.push('/dashboard');
     } catch (err: any) {
@@ -176,11 +189,12 @@ export default function LoginPage() {
             Entrar com Google
           </button>
 
-          <div className="text-center mt-4">
+          <div className="text-center mt-4 flex flex-col gap-2">
             <p className="text-slate-400 text-sm">
               Novo por aqui? 
               <Link href="/register" className="text-green-500 font-semibold hover:underline ml-1">Cadastre-se</Link>
             </p>
+            <Link href="/verify" className="text-slate-500 text-xs hover:text-green-500 transition-colors">Já tem um código? Verifique sua conta</Link>
           </div>
         </form>
 

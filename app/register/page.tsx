@@ -19,6 +19,13 @@ export default function RegisterPage() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [showSuccess, setShowSuccess] = React.useState(false);
+  const [step, setStep] = React.useState<'form' | 'verify'>('form');
+  const [verificationCode, setVerificationCode] = React.useState('');
+  const [toast, setToast] = React.useState<{ message: string; isVisible: boolean; type: 'success' | 'error' }>({
+    message: '',
+    isVisible: false,
+    type: 'success'
+  });
   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -127,15 +134,68 @@ export default function RegisterPage() {
 
         if (profileError) throw profileError;
         
-        setShowSuccess(true);
-        setTimeout(() => {
-          router.push('/register/success');
-        }, 1500);
+        // If session exists, user is already confirmed (e.g. if confirmation is disabled in Supabase)
+        if (authData.session) {
+          setShowSuccess(true);
+          setTimeout(() => {
+            router.push('/register/success');
+          }, 1500);
+        } else {
+          setStep('verify');
+          setToast({ message: 'Código de confirmação enviado para seu e-mail!', isVisible: true, type: 'success' });
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Ocorreu um erro ao cadastrar');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (verificationCode.length < 6) {
+      setError('Por favor, insira o código de 6 dígitos.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email: formData.email,
+        token: verificationCode,
+        type: 'signup',
+      });
+
+      if (verifyError) throw verifyError;
+
+      setShowSuccess(true);
+      setToast({ message: 'E-mail verificado com sucesso!', isVisible: true, type: 'success' });
+      setTimeout(() => {
+        router.push('/register/success');
+      }, 1500);
+    } catch (err: any) {
+      setError(err.message || 'Código inválido ou expirado');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    setError(null);
+    try {
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: formData.email,
+      });
+
+      if (resendError) throw resendError;
+      setToast({ message: 'Código reenviado com sucesso!', isVisible: true, type: 'success' });
+    } catch (err: any) {
+      setError(err.message || 'Erro ao reenviar código');
     }
   };
 
@@ -158,13 +218,23 @@ export default function RegisterPage() {
         className="w-full max-w-md"
       >
         <Toast 
-          message="Conta criada com sucesso! Redirecionando..." 
-          isVisible={showSuccess} 
-          onClose={() => setShowSuccess(false)} 
+          message={toast.message || "Conta criada com sucesso! Redirecionando..."} 
+          isVisible={showSuccess || toast.isVisible} 
+          type={toast.type}
+          onClose={() => {
+            setShowSuccess(false);
+            setToast({ ...toast, isVisible: false });
+          }} 
         />
         <div className="mb-8">
-          <h1 className="text-3xl font-extrabold text-white mb-2">Cadastre-se</h1>
-          <p className="text-slate-400">Preencha os dados abaixo para começar sua jornada acadêmica.</p>
+          <h1 className="text-3xl font-extrabold text-white mb-2">
+            {step === 'form' ? 'Cadastre-se' : 'Verifique seu e-mail'}
+          </h1>
+          <p className="text-slate-400">
+            {step === 'form' 
+              ? 'Preencha os dados abaixo para começar sua jornada acadêmica.' 
+              : `Enviamos um código de confirmação para ${formData.email}.`}
+          </p>
         </div>
 
         {error && (
@@ -173,164 +243,215 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <form className="space-y-5" onSubmit={handleRegister}>
-          {/* Photo Upload */}
-          <div className="flex flex-col items-center mb-6">
-            <input 
-              type="file" 
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept="image/*"
-              className="hidden"
-            />
-            <button 
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="relative group"
-            >
-              <div className="size-24 rounded-full bg-slate-900 border-2 border-slate-700 flex items-center justify-center overflow-hidden relative">
-                {avatarUrl ? (
-                  mounted && <Image src={avatarUrl} alt="Preview" fill className="object-cover" />
-                ) : (
-                  <User className="w-10 h-10 text-slate-600" />
-                )}
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Edit3 className="w-6 h-6 text-white" />
-                </div>
-              </div>
-              <div className="absolute -bottom-1 -right-1 bg-green-500 p-1.5 rounded-full border-2 border-slate-950">
-                <Plus className="w-3 h-3 text-white" />
-              </div>
-            </button>
-            <p className="text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-widest">Foto de Perfil (Opcional)</p>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-300 ml-1">Nome Completo</label>
-            <div className="relative">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+        {step === 'form' ? (
+          <form className="space-y-5" onSubmit={handleRegister}>
+            {/* Photo Upload */}
+            <div className="flex flex-col items-center mb-6">
               <input 
-                type="text"
-                required
-                value={formData.fullName}
-                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                placeholder="Ex: João Silva"
-                className="w-full pl-12 pr-4 py-3.5 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-white placeholder:text-slate-500 outline-none"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-300 ml-1">E-mail Institucional</label>
-            <div className="relative">
-              <Mail className={cn("absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors", emailError ? "text-red-500" : "text-slate-400")} />
-              <input 
-                type="email"
-                required
-                value={formData.email}
-                onChange={handleEmailChange}
-                placeholder="seu.email@instituicao.edu.br"
-                className={cn(
-                  "w-full pl-12 pr-4 py-3.5 bg-slate-900 border rounded-xl focus:ring-2 transition-all text-white placeholder:text-slate-500 outline-none",
-                  emailError 
-                    ? "border-red-500/50 focus:ring-red-500/40 focus:border-red-500" 
-                    : "border-slate-700 focus:ring-green-500 focus:border-green-500"
-                )}
-              />
-            </div>
-            {emailError && (
-              <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider px-1 animate-in fade-in slide-in-from-top-1">
-                {emailError}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-300 ml-1">Curso</label>
-            <select 
-              required
-              value={formData.course}
-              onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-              className="w-full px-4 py-3.5 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-white outline-none appearance-none"
-            >
-              <option value="">Selecione o curso</option>
-              <option value="Mecânica de Motos">Mecânica de Motos</option>
-              <option value="Mecânica Automotiva">Mecânica Automotiva</option>
-              <option value="Mecânica Elétrica">Mecânica Elétrica</option>
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-300 ml-1">Dia da Turma</label>
-            <select 
-              required
-              value={formData.classDay}
-              onChange={(e) => setFormData({ ...formData, classDay: e.target.value })}
-              className="w-full px-4 py-3.5 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-white outline-none appearance-none"
-            >
-              <option value="">Selecione o dia</option>
-              <option value="Segunda-feira">Segunda-feira</option>
-              <option value="Terça-feira">Terça-feira</option>
-              <option value="Quarta-feira">Quarta-feira</option>
-              <option value="Quinta-feira">Quinta-feira</option>
-              <option value="Sexta-feira">Sexta-feira</option>
-              <option value="Sábado">Sábado</option>
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-300 ml-1">Senha</label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-              <input 
-                type={showPassword ? "text" : "password"}
-                required
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="••••••••"
-                className="w-full pl-12 pr-12 py-3.5 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-white placeholder:text-slate-500 outline-none"
+                type="file" 
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
               />
               <button 
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                onClick={() => fileInputRef.current?.click()}
+                className="relative group"
               >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                <div className="size-24 rounded-full bg-slate-900 border-2 border-slate-700 flex items-center justify-center overflow-hidden relative">
+                  {avatarUrl ? (
+                    mounted && <Image src={avatarUrl} alt="Preview" fill className="object-cover" />
+                  ) : (
+                    <User className="w-10 h-10 text-slate-600" />
+                  )}
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Edit3 className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+                <div className="absolute -bottom-1 -right-1 bg-green-500 p-1.5 rounded-full border-2 border-slate-950">
+                  <Plus className="w-3 h-3 text-white" />
+                </div>
+              </button>
+              <p className="text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-widest">Foto de Perfil (Opcional)</p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-300 ml-1">Nome Completo</label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                <input 
+                  type="text"
+                  required
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  placeholder="Ex: João Silva"
+                  className="w-full pl-12 pr-4 py-3.5 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-white placeholder:text-slate-500 outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-300 ml-1">E-mail Institucional</label>
+              <div className="relative">
+                <Mail className={cn("absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors", emailError ? "text-red-500" : "text-slate-400")} />
+                <input 
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={handleEmailChange}
+                  placeholder="seu.email@instituicao.edu.br"
+                  className={cn(
+                    "w-full pl-12 pr-4 py-3.5 bg-slate-900 border rounded-xl focus:ring-2 transition-all text-white placeholder:text-slate-500 outline-none",
+                    emailError 
+                      ? "border-red-500/50 focus:ring-red-500/40 focus:border-red-500" 
+                      : "border-slate-700 focus:ring-green-500 focus:border-green-500"
+                  )}
+                />
+              </div>
+              {emailError && (
+                <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider px-1 animate-in fade-in slide-in-from-top-1">
+                  {emailError}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-300 ml-1">Curso</label>
+              <select 
+                required
+                value={formData.course}
+                onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+                className="w-full px-4 py-3.5 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-white outline-none appearance-none"
+              >
+                <option value="">Selecione o curso</option>
+                <option value="Mecânica de Motos">Mecânica de Motos</option>
+                <option value="Mecânica Automotiva">Mecânica Automotiva</option>
+                <option value="Mecânica Elétrica">Mecânica Elétrica</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-300 ml-1">Dia da Turma</label>
+              <select 
+                required
+                value={formData.classDay}
+                onChange={(e) => setFormData({ ...formData, classDay: e.target.value })}
+                className="w-full px-4 py-3.5 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-white outline-none appearance-none"
+              >
+                <option value="">Selecione o dia</option>
+                <option value="Segunda-feira">Segunda-feira</option>
+                <option value="Terça-feira">Terça-feira</option>
+                <option value="Quarta-feira">Quarta-feira</option>
+                <option value="Quinta-feira">Quinta-feira</option>
+                <option value="Sexta-feira">Sexta-feira</option>
+                <option value="Sábado">Sábado</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-300 ml-1">Senha</label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                <input 
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="••••••••"
+                  className="w-full pl-12 pr-12 py-3.5 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-white placeholder:text-slate-500 outline-none"
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-300 ml-1">Confirmar Senha</label>
+              <div className="relative">
+                <LockKeyhole className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                <input 
+                  type="password"
+                  required
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  placeholder="••••••••"
+                  className="w-full pl-12 pr-4 py-3.5 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-white placeholder:text-slate-500 outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="pt-4">
+              <button 
+                type="submit"
+                disabled={loading}
+                className="w-full py-4 bg-green-600 hover:bg-green-500 text-white font-bold text-lg rounded-xl shadow-lg shadow-green-900/20 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Cadastrando...' : 'Cadastrar'}
               </button>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-300 ml-1">Confirmar Senha</label>
-            <div className="relative">
-              <LockKeyhole className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-              <input 
-                type="password"
-                required
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                placeholder="••••••••"
-                className="w-full pl-12 pr-4 py-3.5 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-white placeholder:text-slate-500 outline-none"
-              />
+          </form>
+        ) : (
+          <form className="space-y-6" onSubmit={handleVerify}>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-300 ml-1">Código de Verificação</label>
+              <div className="relative">
+                <LockKeyhole className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                <input 
+                  type="text"
+                  required
+                  maxLength={6}
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                  placeholder="Digite o código de 6 dígitos"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-white text-center text-2xl tracking-[0.5em] font-bold placeholder:text-slate-700 placeholder:text-sm placeholder:tracking-normal outline-none"
+                />
+              </div>
+              <p className="text-xs text-slate-500 text-center mt-2">
+                O código foi enviado para o seu e-mail. Verifique também a caixa de spam.
+              </p>
             </div>
-          </div>
 
-          <div className="pt-4">
-            <button 
-              type="submit"
-              disabled={loading}
-              className="w-full py-4 bg-green-600 hover:bg-green-500 text-white font-bold text-lg rounded-xl shadow-lg shadow-green-900/20 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Cadastrando...' : 'Cadastrar'}
-            </button>
-          </div>
-        </form>
+            <div className="space-y-3">
+              <button 
+                type="submit"
+                disabled={loading}
+                className="w-full py-4 bg-green-600 hover:bg-green-500 text-white font-bold text-lg rounded-xl shadow-lg shadow-green-900/20 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Verificando...' : 'Verificar Código'}
+              </button>
+              
+              <button 
+                type="button"
+                onClick={handleResendCode}
+                disabled={loading}
+                className="w-full py-3 bg-transparent text-green-500 font-bold text-sm rounded-xl hover:bg-green-500/10 transition-all disabled:opacity-50"
+              >
+                Não recebeu o código? Reenviar
+              </button>
 
-        <div className="mt-8 text-center">
+              <button 
+                type="button"
+                onClick={() => setStep('form')}
+                className="w-full py-3 bg-transparent text-slate-500 font-bold text-sm rounded-xl hover:bg-slate-800 transition-all"
+              >
+                Voltar para o cadastro
+              </button>
+            </div>
+          </form>
+        )}
+
+        <div className="mt-8 text-center flex flex-col gap-3">
           <p className="text-slate-400">
             Já tem uma conta? 
             <Link href="/" className="text-green-500 font-bold hover:underline ml-1">Acessar</Link>
           </p>
+          <Link href="/verify" className="text-slate-500 text-xs font-bold hover:text-green-500 transition-colors">Já recebeu o código? Verifique aqui</Link>
         </div>
       </motion.div>
     </div>
