@@ -94,7 +94,11 @@ export default function EnrollmentDeclarationPage() {
 
               <p>
                 Informamos ainda que o referido curso possui modalidade somente presencial e o aluno mantém status de 
-                <span className="font-bold uppercase text-green-700 tracking-[0.5em]"> {profile?.status === 'active' ? 'A T I V O' : 'P E N D E N T E'}</span> 
+                <span className="font-bold uppercase text-green-700 tracking-[0.5em]"> 
+                  {profile?.status === 'active' ? 'A T I V O' : 
+                   profile?.status === 'pending' ? 'P E N D E N T E' :
+                   profile?.status === 'inactive' ? 'I N A T I V O' : 'P E N D E N T E'}
+                </span> 
                 em nossos registros acadêmicos até a presente data.
               </p>
 

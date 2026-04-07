@@ -130,7 +130,7 @@ export default function RegisterPage() {
       if (authData.user) {
         const { error: profileError } = await supabase
               .from('profiles')
-              .insert([
+              .upsert([
                 {
                   user_id: authData.user.id,
                   full_name: formData.fullName,
@@ -140,7 +140,7 @@ export default function RegisterPage() {
                   role: 'student',
                   avatar_url: avatarUrl,
                 },
-              ]);
+              ], { onConflict: 'user_id' });
 
         if (profileError) throw profileError;
         
