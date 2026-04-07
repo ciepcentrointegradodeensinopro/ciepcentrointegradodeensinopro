@@ -136,7 +136,7 @@ export default function RegisterPage() {
                   full_name: formData.fullName,
                   email: formData.email,
                   course: formData.course,
-                  class_day: formData.classDay,
+                  turma: formData.classDay,
                   role: 'student',
                   avatar_url: avatarUrl,
                 },

@@ -14,7 +14,7 @@ import { format, addDays, isAfter, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export default function IDCardPage() {
-  const { profile, loading, isAdmin } = useAuth();
+  const { user, profile, loading, isAdmin } = useAuth();
   const mounted = useMounted();
   const [renewing, setRenewing] = React.useState(false);
   const [message, setMessage] = React.useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -139,11 +139,14 @@ export default function IDCardPage() {
               <div className="flex flex-col justify-center">
                 <div className="mb-2">
                   <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Nome</p>
-                  <p className="text-xl font-bold">{profile?.full_name || 'Usuário'}</p>
+                  <p className="text-xl font-bold">{profile?.full_name || user?.user_metadata?.full_name || 'Usuário'}</p>
                 </div>
                 <div className="mb-2">
                   <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Curso</p>
-                  <p className="text-green-500 text-sm font-bold">{profile?.course || 'Não informado'}</p>
+                  <p className="text-green-500 text-sm font-bold">
+                    {profile?.course || 'Não informado'}
+                    {profile?.turma && <span className="text-slate-500 text-[10px] ml-2 font-normal">({profile.turma})</span>}
+                  </p>
                 </div>
               </div>
             </div>

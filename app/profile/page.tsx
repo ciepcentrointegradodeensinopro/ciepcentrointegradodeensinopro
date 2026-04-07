@@ -15,7 +15,7 @@ import { Toast } from '@/components/Toast';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { profile, loading, isAdmin } = useAuth();
+  const { user, profile, loading, isAdmin } = useAuth();
   const mounted = useMounted();
   const [showSuccess, setShowSuccess] = React.useState(false);
   const [successMessage, setSuccessMessage] = React.useState('');
@@ -139,7 +139,7 @@ export default function ProfilePage() {
               </button>
             </div>
             <div className="text-center">
-              <h1 className="text-2xl font-bold">{profile?.full_name || 'Usuário'}</h1>
+              <h1 className="text-2xl font-bold">{profile?.full_name || user?.user_metadata?.full_name || 'Usuário'}</h1>
               <p className="text-green-500 font-medium">{profile?.course || (isAdmin ? 'Administrador' : 'Estudante')}</p>
             </div>
             <button 
