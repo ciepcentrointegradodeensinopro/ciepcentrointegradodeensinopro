@@ -19,7 +19,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [showSuccess, setShowSuccess] = React.useState(false);
-  const [step, setStep] = React.useState<'form' | 'verify'>('form');
+  const [step, setStep] = React.useState<'form' | 'confirm' | 'verify'>('form');
   const [verificationCode, setVerificationCode] = React.useState('');
   const [toast, setToast] = React.useState<{ message: string; isVisible: boolean; type: 'success' | 'error' }>({
     message: '',
@@ -85,7 +85,7 @@ export default function RegisterPage() {
     );
   }
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleNextToConfirm = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Email validation
@@ -95,14 +95,24 @@ export default function RegisterPage() {
       return;
     }
 
-    setLoading(true);
-    setError(null);
-
     if (formData.password !== formData.confirmPassword) {
       setError('As senhas não coincidem');
-      setLoading(false);
       return;
     }
+
+    if (formData.password.length < 6) {
+      setError('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    setError(null);
+    setStep('confirm');
+    window.scrollTo(0, 0);
+  };
+
+  const handleRegister = async () => {
+    setLoading(true);
+    setError(null);
 
     try {
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -228,11 +238,13 @@ export default function RegisterPage() {
         />
         <div className="mb-8">
           <h1 className="text-3xl font-extrabold text-white mb-2">
-            {step === 'form' ? 'Cadastre-se' : 'Verifique seu e-mail'}
+            {step === 'form' ? 'Cadastre-se' : step === 'confirm' ? 'Confirme seus dados' : 'Verifique seu e-mail'}
           </h1>
           <p className="text-slate-400">
             {step === 'form' 
               ? 'Preencha os dados abaixo para começar sua jornada acadêmica.' 
+              : step === 'confirm'
+              ? 'Revise as informações abaixo antes de finalizar seu cadastro.'
               : `Enviamos um código de confirmação para ${formData.email}.`}
           </p>
         </div>
@@ -244,7 +256,7 @@ export default function RegisterPage() {
         )}
 
         {step === 'form' ? (
-          <form className="space-y-5" onSubmit={handleRegister}>
+          <form className="space-y-5" onSubmit={handleNextToConfirm}>
             {/* Photo Upload */}
             <div className="flex flex-col items-center mb-6">
               <input 
@@ -392,10 +404,57 @@ export default function RegisterPage() {
                 disabled={loading}
                 className="w-full py-4 bg-green-600 hover:bg-green-500 text-white font-bold text-lg rounded-xl shadow-lg shadow-green-900/20 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Cadastrando...' : 'Cadastrar'}
+                Próximo passo
               </button>
             </div>
           </form>
+        ) : step === 'confirm' ? (
+          <div className="space-y-6">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+              <div className="p-6 border-b border-slate-800 flex items-center gap-4">
+                <div className="size-16 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden relative">
+                  {avatarUrl ? (
+                    mounted && <Image src={avatarUrl} alt="Preview" fill className="object-cover" />
+                  ) : (
+                    <User className="w-8 h-8 text-slate-600" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">{formData.fullName}</h3>
+                  <p className="text-sm text-slate-500">{formData.email}</p>
+                </div>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-500">Curso</span>
+                  <span className="text-sm font-bold text-white">{formData.course}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-500">Turma</span>
+                  <span className="text-sm font-bold text-white">{formData.classDay}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <button 
+                onClick={handleRegister}
+                disabled={loading}
+                className="w-full py-4 bg-green-600 hover:bg-green-500 text-white font-bold text-lg rounded-xl shadow-lg shadow-green-900/20 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Processando...' : 'Finalizar Cadastro'}
+              </button>
+              
+              <button 
+                onClick={() => setStep('form')}
+                disabled={loading}
+                className="w-full py-3 bg-transparent text-slate-500 font-bold text-sm rounded-xl hover:bg-slate-800 transition-all disabled:opacity-50"
+              >
+                Corrigir dados
+              </button>
+            </div>
+          </div>
         ) : (
           <form className="space-y-6" onSubmit={handleVerify}>
             <div className="space-y-2">

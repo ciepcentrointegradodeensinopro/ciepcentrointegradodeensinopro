@@ -29,6 +29,7 @@ export default function AddStudentPage() {
   const [configReady, setConfigReady] = React.useState<boolean | null>(null);
   const [showSuccess, setShowSuccess] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
+  const [step, setStep] = React.useState<'form' | 'confirm'>('form');
   const [toast, setToast] = React.useState<{ message: string; isVisible: boolean; type: 'success' | 'error' }>({
     message: '',
     isVisible: false,
@@ -96,7 +97,7 @@ export default function AddStudentPage() {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleNextToConfirm = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Email validation
@@ -106,6 +107,16 @@ export default function AddStudentPage() {
       return;
     }
 
+    if (formData.password.length < 6) {
+      setToast({ message: 'A senha deve ter pelo menos 6 caracteres.', isVisible: true, type: 'error' });
+      return;
+    }
+
+    setStep('confirm');
+    window.scrollTo(0, 0);
+  };
+
+  const handleSubmit = async () => {
     setLoading(true);
 
     try {
@@ -195,222 +206,303 @@ export default function AddStudentPage() {
       />
 
       <main className="flex-1 overflow-y-auto pb-32">
-        <form onSubmit={handleSubmit} className="max-w-md mx-auto">
-          {/* Profile Picture Upload */}
-          <div className="flex p-8 flex-col items-center">
-            <input 
-              type="file" 
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept="image/*"
-              className="hidden"
-            />
-            <div 
-              onClick={() => fileInputRef.current?.click()}
-              className="relative group cursor-pointer"
-            >
-              <div className="size-32 rounded-full bg-slate-900 border-4 border-green-500/20 flex items-center justify-center overflow-hidden relative">
-                {mounted && (
-                  <Image 
-                    src={avatarUrl || "https://picsum.photos/seed/upload/200/200"} 
-                    alt="Profile" 
-                    fill
-                    className={cn("object-cover transition-opacity", !avatarUrl && "opacity-50 group-hover:opacity-30")}
-                    referrerPolicy="no-referrer"
-                  />
-                )}
-                {!avatarUrl && (
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Camera className="w-8 h-8 text-white" />
-                  </div>
-                )}
-              </div>
-              <div className="absolute bottom-0 right-0 bg-green-500 p-2 rounded-full border-4 border-slate-950">
-                <Edit3 className="w-4 h-4 text-white" />
-              </div>
-            </div>
-            <div className="mt-4 text-center">
-              <p className="text-xl font-bold">Foto do Usuário</p>
-              <p className="text-green-500 text-sm font-medium">Toque para carregar imagem</p>
-            </div>
-          </div>
-
-          {/* Form Fields */}
-          <div className="px-4 space-y-6">
-            <div className="space-y-2">
-              <label className="text-slate-400 text-sm font-semibold px-1">Nome Completo</label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
-                <input 
-                  type="text"
-                  required
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  placeholder="Digite o nome completo"
-                  className="w-full pl-12 pr-4 h-14 rounded-xl border border-slate-800 bg-slate-900 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-slate-400 text-sm font-semibold px-1">E-mail</label>
-              <div className="relative">
-                <Mail className={cn("absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors", emailError ? "text-red-500" : "text-slate-500")} />
-                <input 
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={handleEmailChange}
-                  placeholder="exemplo@email.com"
-                  className={cn(
-                    "w-full pl-12 pr-4 h-14 rounded-xl border bg-slate-900 text-white focus:ring-2 transition-all outline-none",
-                    emailError 
-                      ? "border-red-500/50 focus:ring-red-500/40 focus:border-red-500" 
-                      : "border-slate-800 focus:ring-green-500 focus:border-green-500"
+        {step === 'form' ? (
+          <form onSubmit={handleNextToConfirm} className="max-w-md mx-auto">
+            {/* Profile Picture Upload */}
+            <div className="flex p-8 flex-col items-center">
+              <input 
+                type="file" 
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
+              />
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className="relative group cursor-pointer"
+              >
+                <div className="size-32 rounded-full bg-slate-900 border-4 border-green-500/20 flex items-center justify-center overflow-hidden relative">
+                  {mounted && (
+                    <Image 
+                      src={avatarUrl || "https://picsum.photos/seed/upload/200/200"} 
+                      alt="Profile" 
+                      fill
+                      className={cn("object-cover transition-opacity", !avatarUrl && "opacity-50 group-hover:opacity-30")}
+                      referrerPolicy="no-referrer"
+                    />
                   )}
-                />
+                  {!avatarUrl && (
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Camera className="w-8 h-8 text-white" />
+                    </div>
+                  )}
+                </div>
+                <div className="absolute bottom-0 right-0 bg-green-500 p-2 rounded-full border-4 border-slate-950">
+                  <Edit3 className="w-4 h-4 text-white" />
+                </div>
               </div>
-              {emailError && (
-                <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider px-1 animate-in fade-in slide-in-from-top-1">
-                  {emailError}
-                </p>
+              <div className="mt-4 text-center">
+                <p className="text-xl font-bold">Foto do Usuário</p>
+                <p className="text-green-500 text-sm font-medium">Toque para carregar imagem</p>
+              </div>
+            </div>
+
+            {/* Form Fields */}
+            <div className="px-4 space-y-6">
+              <div className="space-y-2">
+                <label className="text-slate-400 text-sm font-semibold px-1">Nome Completo</label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+                  <input 
+                    type="text"
+                    required
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    placeholder="Digite o nome completo"
+                    className="w-full pl-12 pr-4 h-14 rounded-xl border border-slate-800 bg-slate-900 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-slate-400 text-sm font-semibold px-1">E-mail</label>
+                <div className="relative">
+                  <Mail className={cn("absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors", emailError ? "text-red-500" : "text-slate-500")} />
+                  <input 
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={handleEmailChange}
+                    placeholder="exemplo@email.com"
+                    className={cn(
+                      "w-full pl-12 pr-4 h-14 rounded-xl border bg-slate-900 text-white focus:ring-2 transition-all outline-none",
+                      emailError 
+                        ? "border-red-500/50 focus:ring-red-500/40 focus:border-red-500" 
+                        : "border-slate-800 focus:ring-green-500 focus:border-green-500"
+                    )}
+                  />
+                </div>
+                {emailError && (
+                  <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider px-1 animate-in fade-in slide-in-from-top-1">
+                    {emailError}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-slate-400 text-sm font-semibold px-1">Senha de Acesso</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+                  <input 
+                    type={showPassword ? "text" : "password"}
+                    required
+                    minLength={6}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="Crie uma senha segura"
+                    className="w-full pl-12 pr-12 h-14 rounded-xl border border-slate-800 bg-slate-900 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider px-1">Mínimo de 6 caracteres</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-slate-400 text-sm font-semibold px-1">Status</label>
+                  <div className="flex items-center h-14 px-4 bg-slate-900 rounded-xl border border-slate-800 justify-between">
+                    <span className="text-xs text-slate-400">{isActive ? 'Ativo' : 'Inativo'}</span>
+                    <button 
+                      type="button"
+                      onClick={() => setIsActive(!isActive)}
+                      className={cn(
+                        "relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none",
+                        isActive ? "bg-green-500" : "bg-slate-700"
+                      )}
+                    >
+                      <span 
+                        className={cn(
+                          "inline-block h-3 w-3 transform rounded-full bg-white transition-transform",
+                          isActive ? "translate-x-5" : "translate-x-1"
+                        )}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-slate-400 text-sm font-semibold px-1">Administrador</label>
+                  <div className="flex items-center h-14 px-4 bg-slate-900 rounded-xl border border-slate-800 justify-between">
+                    <span className="text-xs text-slate-400">{isAdminRole ? 'Sim' : 'Não'}</span>
+                    <button 
+                      type="button"
+                      onClick={() => setIsAdminRole(!isAdminRole)}
+                      className={cn(
+                        "relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none",
+                        isAdminRole ? "bg-purple-500" : "bg-slate-700"
+                      )}
+                    >
+                      <span 
+                        className={cn(
+                          "inline-block h-3 w-3 transform rounded-full bg-white transition-transform",
+                          isAdminRole ? "translate-x-5" : "translate-x-1"
+                        )}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {!isAdminRole && (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-slate-400 text-sm font-semibold px-1">Curso</label>
+                    <div className="relative">
+                      <School className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+                      <select 
+                        required={!isAdminRole}
+                        value={formData.course}
+                        onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+                        className="w-full pl-12 pr-10 h-14 rounded-xl border border-slate-800 bg-slate-900 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none appearance-none"
+                      >
+                        <option value="">Selecione o curso</option>
+                        <option value="Mecânica de Motos">Mecânica de Motos</option>
+                        <option value="Mecânica Automotiva">Mecânica Automotiva</option>
+                        <option value="Mecânica Elétrica">Mecânica Elétrica</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-slate-400 text-sm font-semibold px-1">Turma (Dia da Semana)</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+                      <select 
+                        required={!isAdminRole}
+                        value={formData.turma}
+                        onChange={(e) => setFormData({ ...formData, turma: e.target.value })}
+                        className="w-full pl-12 pr-10 h-14 rounded-xl border border-slate-800 bg-slate-900 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none appearance-none"
+                      >
+                        <option value="">Selecione o dia</option>
+                        <option value="Segunda-feira">Segunda-feira</option>
+                        <option value="Terça-feira">Terça-feira</option>
+                        <option value="Quarta-feira">Quarta-feira</option>
+                        <option value="Quinta-feira">Quinta-feira</option>
+                        <option value="Sexta-feira">Sexta-feira</option>
+                        <option value="Sábado">Sábado</option>
+                      </select>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
 
-            <div className="space-y-2">
-              <label className="text-slate-400 text-sm font-semibold px-1">Senha de Acesso</label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
-                <input 
-                  type={showPassword ? "text" : "password"}
-                  required
-                  minLength={6}
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="Crie uma senha segura"
-                  className="w-full pl-12 pr-12 h-14 rounded-xl border border-slate-800 bg-slate-900 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-slate-950/80 backdrop-blur-md border-t border-slate-800 flex flex-col gap-3 z-50">
+              <div className="max-w-md mx-auto w-full flex flex-col gap-3">
+                <button 
+                  type="submit"
+                  disabled={loading || configReady === false}
+                  className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  Próximo passo
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => router.back()}
+                  className="w-full bg-slate-900 hover:bg-slate-800 text-slate-400 font-semibold py-3 rounded-xl transition-all"
+                >
+                  Cancelar
                 </button>
               </div>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider px-1">Mínimo de 6 caracteres</p>
+            </div>
+          </form>
+        ) : (
+          <div className="max-w-md mx-auto px-4 py-8 space-y-8">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-2">Confirmar Dados</h2>
+              <p className="text-slate-400 text-sm">Revise as informações do novo usuário antes de salvar.</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-slate-400 text-sm font-semibold px-1">Status</label>
-                <div className="flex items-center h-14 px-4 bg-slate-900 rounded-xl border border-slate-800 justify-between">
-                  <span className="text-xs text-slate-400">{isActive ? 'Ativo' : 'Inativo'}</span>
-                  <button 
-                    type="button"
-                    onClick={() => setIsActive(!isActive)}
-                    className={cn(
-                      "relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none",
-                      isActive ? "bg-green-500" : "bg-slate-700"
-                    )}
-                  >
-                    <span 
-                      className={cn(
-                        "inline-block h-3 w-3 transform rounded-full bg-white transition-transform",
-                        isActive ? "translate-x-5" : "translate-x-1"
-                      )}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+              <div className="p-6 border-b border-slate-800 flex items-center gap-4">
+                <div className="size-20 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden relative">
+                  {mounted && (
+                    <Image 
+                      src={avatarUrl || "https://picsum.photos/seed/upload/200/200"} 
+                      alt="Profile" 
+                      fill
+                      className="object-cover"
+                      referrerPolicy="no-referrer"
                     />
-                  </button>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">{formData.fullName}</h3>
+                  <p className="text-sm text-slate-500">{formData.email}</p>
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <label className="text-slate-400 text-sm font-semibold px-1">Administrador</label>
-                <div className="flex items-center h-14 px-4 bg-slate-900 rounded-xl border border-slate-800 justify-between">
-                  <span className="text-xs text-slate-400">{isAdminRole ? 'Sim' : 'Não'}</span>
-                  <button 
-                    type="button"
-                    onClick={() => setIsAdminRole(!isAdminRole)}
-                    className={cn(
-                      "relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none",
-                      isAdminRole ? "bg-purple-500" : "bg-slate-700"
-                    )}
-                  >
-                    <span 
-                      className={cn(
-                        "inline-block h-3 w-3 transform rounded-full bg-white transition-transform",
-                        isAdminRole ? "translate-x-5" : "translate-x-1"
-                      )}
-                    />
-                  </button>
+              
+              <div className="p-6 space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-500">Tipo de Conta</span>
+                  <span className={cn(
+                    "text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md",
+                    isAdminRole ? "bg-purple-500/10 text-purple-400" : "bg-blue-500/10 text-blue-400"
+                  )}>
+                    {isAdminRole ? 'Administrador' : 'Aluno'}
+                  </span>
+                </div>
+                {!isAdminRole && (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-slate-500">Curso</span>
+                      <span className="text-sm font-bold text-white">{formData.course}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-slate-500">Turma</span>
+                      <span className="text-sm font-bold text-white">{formData.turma}</span>
+                    </div>
+                  </>
+                )}
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-500">Status Inicial</span>
+                  <span className={cn(
+                    "text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md",
+                    isActive ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
+                  )}>
+                    {isActive ? 'Ativo' : 'Inativo'}
+                  </span>
                 </div>
               </div>
             </div>
 
-            {!isAdminRole && (
-              <>
-                <div className="space-y-2">
-                  <label className="text-slate-400 text-sm font-semibold px-1">Curso</label>
-                  <div className="relative">
-                    <School className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
-                    <select 
-                      required={!isAdminRole}
-                      value={formData.course}
-                      onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-                      className="w-full pl-12 pr-10 h-14 rounded-xl border border-slate-800 bg-slate-900 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none appearance-none"
-                    >
-                      <option value="">Selecione o curso</option>
-                      <option value="Mecânica de Motos">Mecânica de Motos</option>
-                      <option value="Mecânica Automotiva">Mecânica Automotiva</option>
-                      <option value="Mecânica Elétrica">Mecânica Elétrica</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-slate-400 text-sm font-semibold px-1">Turma (Dia da Semana)</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
-                    <select 
-                      required={!isAdminRole}
-                      value={formData.turma}
-                      onChange={(e) => setFormData({ ...formData, turma: e.target.value })}
-                      className="w-full pl-12 pr-10 h-14 rounded-xl border border-slate-800 bg-slate-900 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none appearance-none"
-                    >
-                      <option value="">Selecione o dia</option>
-                      <option value="Segunda-feira">Segunda-feira</option>
-                      <option value="Terça-feira">Terça-feira</option>
-                      <option value="Quarta-feira">Quarta-feira</option>
-                      <option value="Quinta-feira">Quinta-feira</option>
-                      <option value="Sexta-feira">Sexta-feira</option>
-                      <option value="Sábado">Sábado</option>
-                    </select>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-slate-950/80 backdrop-blur-md border-t border-slate-800 flex flex-col gap-3 z-50">
-            <div className="max-w-md mx-auto w-full flex flex-col gap-3">
-              <button 
-                type="submit"
-                disabled={loading || configReady === false}
-                className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Save className="w-5 h-5" />
-                {loading ? 'Salvando...' : 'Salvar Usuário'}
-              </button>
-              <button 
-                type="button"
-                onClick={() => router.back()}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-slate-400 font-semibold py-3 rounded-xl transition-all"
-              >
-                Cancelar
-              </button>
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-slate-950/80 backdrop-blur-md border-t border-slate-800 flex flex-col gap-3 z-50">
+              <div className="max-w-md mx-auto w-full flex flex-col gap-3">
+                <button 
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Save className="w-5 h-5" />
+                  {loading ? 'Salvando...' : 'Confirmar e Salvar'}
+                </button>
+                <button 
+                  onClick={() => setStep('form')}
+                  disabled={loading}
+                  className="w-full bg-slate-900 hover:bg-slate-800 text-slate-400 font-semibold py-3 rounded-xl transition-all"
+                >
+                  Voltar e Editar
+                </button>
+              </div>
             </div>
           </div>
-        </form>
+        )}
       </main>
     </div>
   );
