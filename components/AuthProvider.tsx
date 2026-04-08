@@ -240,18 +240,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!loading && isSupabaseConfigured) {
       const publicRoutes = ['/', '/register', '/forgot-password', '/reset-password', '/pending-approval'];
+      const isPublicRoute = pathname && publicRoutes.includes(pathname);
       
-      if (!user && pathname && !publicRoutes.includes(pathname)) {
+      // 1. If not logged in and trying to access private route -> redirect to home
+      if (!user && !isPublicRoute) {
+        console.log('AuthProvider: No user, redirecting to home');
         router.push('/');
         return;
       }
 
-      // Check for pending status
-      if (user && profile && profile.status === 'pending' && pathname !== '/pending-approval') {
-        // Admins are exempt from pending status check
+      // 2. If logged in, check profile and status
+      if (user) {
+        // Admins are always allowed
         const isAdminUser = profile?.role === 'admin' || (user?.email && adminEmails.includes(user.email));
-        if (!isAdminUser) {
+        
+        if (isAdminUser) {
+          console.log('AuthProvider: Admin user detected, allowing access');
+          return;
+        }
+
+        // If profile is still null but we are not loading, it's an error state or new user
+        if (!profile && !isPublicRoute) {
+          console.log('AuthProvider: User logged in but no profile found, redirecting to home');
+          router.push('/');
+          return;
+        }
+
+        // Check for pending or inactive status
+        if ((profile?.status === 'pending' || profile?.status === 'inactive') && pathname !== '/pending-approval') {
+          console.log(`AuthProvider: User with status ${profile?.status} detected, redirecting to approval page`);
           router.push('/pending-approval');
+          return;
+        }
+
+        // If active and on pending-approval page, redirect to dashboard
+        if (profile?.status === 'active' && pathname === '/pending-approval') {
+          router.push('/dashboard');
         }
       }
     }
