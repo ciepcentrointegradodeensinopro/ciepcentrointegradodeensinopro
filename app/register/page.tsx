@@ -121,6 +121,9 @@ export default function RegisterPage() {
         options: {
           data: {
             full_name: formData.fullName,
+            course: formData.course,
+            turma: formData.classDay,
+            status: 'active'
           }
         }
       });
@@ -138,6 +141,7 @@ export default function RegisterPage() {
                   course: formData.course,
                   turma: formData.classDay,
                   role: 'student',
+                  status: 'active',
                   avatar_url: avatarUrl,
                 },
               ], { onConflict: 'user_id' });

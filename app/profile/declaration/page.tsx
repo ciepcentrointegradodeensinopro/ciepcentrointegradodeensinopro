@@ -89,15 +89,15 @@ export default function EnrollmentDeclarationPage() {
                 Declaramos, para os devidos fins de direito, que o(a) aluno(a) 
                 <span className="font-bold"> {profile?.full_name || user?.user_metadata?.full_name || '________________________________'}</span>, 
                 encontra-se regularmente matriculado(a) e frequentando as aulas do curso de 
-                <span className="font-bold"> {profile?.course || '________________________________'}</span> nesta instituição de ensino.
+                <span className="font-bold"> {profile?.course || user?.user_metadata?.course || '________________________________'}</span> nesta instituição de ensino.
               </p>
 
               <p>
                 Informamos ainda que o referido curso possui modalidade somente presencial e o aluno mantém status de 
                 <span className="font-bold uppercase text-green-700 tracking-[0.5em]"> 
-                  {profile?.status === 'active' ? 'A T I V O' : 
+                  {profile?.status === 'active' || (!profile?.status && profile) ? 'A T I V O' : 
                    profile?.status === 'pending' ? 'P E N D E N T E' :
-                   profile?.status === 'inactive' ? 'I N A T I V O' : 'P E N D E N T E'}
+                   profile?.status === 'inactive' ? 'I N A T I V O' : 'A T I V O'}
                 </span> 
                 em nossos registros acadêmicos até a presente data.
               </p>
