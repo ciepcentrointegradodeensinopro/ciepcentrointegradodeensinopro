@@ -9,7 +9,7 @@ import { useAuth } from '@/components/AuthProvider';
 import Image from 'next/image';
 
 export default function LoginPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, isAdmin, loading: authLoading } = useAuth();
   const [showPassword, setShowPassword] = React.useState(false);
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -19,9 +19,15 @@ export default function LoginPage() {
 
   React.useEffect(() => {
     if (!authLoading && user) {
-      router.push('/dashboard');
+      // If user is logged in, let AuthProvider handle the redirect based on status
+      // We only redirect to dashboard here if we are sure they are active
+      if (profile?.status === 'active' || isAdmin) {
+        router.push('/dashboard');
+      } else if (profile?.status === 'pending' || profile?.status === 'inactive') {
+        router.push('/pending-approval');
+      }
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, profile, isAdmin, router]);
 
   if (authLoading) {
     return (
@@ -68,7 +74,8 @@ export default function LoginPage() {
         throw authError;
       }
 
-      router.push('/dashboard');
+      // After login, AuthProvider will catch the session change and handle redirects
+      // We don't push to dashboard here to avoid bypassing the status check
     } catch (err: any) {
       setError(err.message || 'E-mail ou senha inválidos');
     } finally {

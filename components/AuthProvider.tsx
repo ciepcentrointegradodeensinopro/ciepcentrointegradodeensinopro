@@ -26,6 +26,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const pathnameRef = React.useRef(pathname);
@@ -33,6 +34,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     pathnameRef.current = pathname;
   }, [pathname]);
+
+  const fetchProfile = React.useCallback(async (userId: string, userEmail?: string) => {
+    try {
+      console.log('AuthProvider: Fetching profile for', userId);
+      let { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error) {
+        console.log('AuthProvider: Profile fetch error (expected if new user)', error.message);
+        return null;
+      }
+
+      // Auto-upgrade admin role if email matches
+      if (userEmail && adminEmails.includes(userEmail) && data.role !== 'admin') {
+        console.log('AuthProvider: Auto-upgrading admin role in database');
+        const { data: updatedData, error: updateError } = await supabase
+          .from('profiles')
+          .update({ role: 'admin' })
+          .eq('user_id', userId)
+          .select()
+          .single();
+        
+        if (!updateError) {
+          return updatedData;
+        }
+      }
+
+      return data;
+    } catch (err) {
+      console.error('AuthProvider: Profile fetch exception', err);
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     console.log('AuthProvider: Initializing...', { isSupabaseConfigured });
@@ -45,7 +82,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('AuthProvider: Safety timeout reached, forcing loading false');
         setLoading(false);
       }
-    }, 3000); // Reduced to 3 seconds for better UX
+    }, 3000);
 
     if (!isSupabaseConfigured) {
       console.log('AuthProvider: Supabase not configured');
@@ -102,42 +139,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     window.addEventListener('unhandledrejection', handleUnhandledRejection);
-
-    const fetchProfile = async (userId: string, userEmail?: string) => {
-      try {
-        console.log('AuthProvider: Fetching profile for', userId);
-        let { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', userId)
-          .single();
-        
-        if (error) {
-          console.log('AuthProvider: Profile fetch error (expected if new user)', error.message);
-          return null;
-        }
-
-        // Auto-upgrade admin role if email matches
-        if (userEmail && adminEmails.includes(userEmail) && data.role !== 'admin') {
-          console.log('AuthProvider: Auto-upgrading admin role in database');
-          const { data: updatedData, error: updateError } = await supabase
-            .from('profiles')
-            .update({ role: 'admin' })
-            .eq('user_id', userId)
-            .select()
-            .single();
-          
-          if (!updateError) {
-            return updatedData;
-          }
-        }
-
-        return data;
-      } catch (err) {
-        console.error('AuthProvider: Profile fetch exception', err);
-        return null;
-      }
-    };
 
     const initialize = async () => {
       try {
@@ -245,41 +246,58 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // 1. If not logged in and trying to access private route -> redirect to home
       if (!user && !isPublicRoute) {
         console.log('AuthProvider: No user, redirecting to home');
+        setIsRedirecting(true);
         router.push('/');
         return;
       }
 
       // 2. If logged in, check profile and status
       if (user) {
-        // Admins are always allowed
         const isAdminUser = profile?.role === 'admin' || (user?.email && adminEmails.includes(user.email));
         
         if (isAdminUser) {
           console.log('AuthProvider: Admin user detected, allowing access');
+          setIsRedirecting(false);
           return;
         }
 
-        // If profile is still null but we are not loading, it's an error state or new user
+        // If profile is still null but we are not loading, it might be a new user whose trigger hasn't finished
         if (!profile && !isPublicRoute) {
-          console.log('AuthProvider: User logged in but no profile found, redirecting to home');
-          router.push('/');
+          console.log('AuthProvider: User logged in but no profile found yet');
+          setIsRedirecting(true);
+          const checkProfile = async () => {
+            const data = await fetchProfile(user.id, user.email);
+            if (data) {
+              setProfile(data);
+              setIsRedirecting(false);
+            } else {
+              console.log('AuthProvider: Profile still not found, redirecting to home');
+              router.push('/');
+            }
+          };
+          checkProfile();
           return;
         }
 
         // Check for pending or inactive status
         if ((profile?.status === 'pending' || profile?.status === 'inactive') && pathname !== '/pending-approval') {
           console.log(`AuthProvider: User with status ${profile?.status} detected, redirecting to approval page`);
+          setIsRedirecting(true);
           router.push('/pending-approval');
           return;
         }
 
         // If active and on pending-approval page, redirect to dashboard
         if (profile?.status === 'active' && pathname === '/pending-approval') {
+          setIsRedirecting(true);
           router.push('/dashboard');
+          return;
         }
       }
+      
+      setIsRedirecting(false);
     }
-  }, [user, profile, loading, pathname, router]);
+  }, [user, profile, loading, pathname, router, fetchProfile]);
 
   const isAdmin = profile?.role === 'admin' || (user?.email && adminEmails.includes(user.email));
 
@@ -326,13 +344,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (loading) {
+  if (loading || isRedirecting) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mb-6"></div>
-        <p className="text-slate-400 text-sm font-medium animate-pulse">Iniciando sistema...</p>
+        <p className="text-slate-400 text-sm font-medium animate-pulse">
+          {isRedirecting ? 'Redirecionando...' : 'Iniciando sistema...'}
+        </p>
         <button 
-          onClick={() => setLoading(false)}
+          onClick={() => {
+            setLoading(false);
+            setIsRedirecting(false);
+          }}
           className="mt-8 text-xs text-slate-600 hover:text-slate-400 underline transition-colors"
         >
           Demorando muito? Clique aqui para forçar o carregamento
