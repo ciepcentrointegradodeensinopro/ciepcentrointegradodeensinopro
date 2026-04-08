@@ -60,28 +60,28 @@ export default function RegisterSuccessPage() {
         <div className="space-y-4">
           <h1 className="text-4xl font-extrabold tracking-tight">Cadastro Realizado!</h1>
           <p className="text-slate-400 text-lg leading-relaxed">
-            Sua conta foi criada com sucesso. Agora você já pode acessar todos os recursos do portal.
+            Sua conta foi criada com sucesso. Por medidas de segurança, seu acesso será liberado após a aprovação de um administrador.
           </p>
         </div>
 
         {/* Info Card */}
         <div className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl text-left space-y-4">
           <div className="flex items-start gap-4">
-            <div className="size-10 bg-green-500/10 rounded-lg flex items-center justify-center shrink-0">
-              <User className="w-5 h-5 text-green-500" />
+            <div className="size-10 bg-amber-500/10 rounded-lg flex items-center justify-center shrink-0">
+              <User className="w-5 h-5 text-amber-500" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-200">Perfil Ativo</h3>
-              <p className="text-sm text-slate-500">Seus dados foram processados e seu acesso está liberado.</p>
+              <h3 className="font-bold text-slate-200">Aguardando Aprovação</h3>
+              <p className="text-sm text-slate-500">Nossa equipe revisará seus dados em breve para ativar seu acesso.</p>
             </div>
           </div>
           <div className="flex items-start gap-4">
-            <div className="size-10 bg-green-500/10 rounded-lg flex items-center justify-center shrink-0">
-              <Home className="w-5 h-5 text-green-500" />
+            <div className="size-10 bg-blue-500/10 rounded-lg flex items-center justify-center shrink-0">
+              <Home className="w-5 h-5 text-blue-500" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-200">Painel de Controle</h3>
-              <p className="text-sm text-slate-500">Acesse cronogramas, notas e materiais de apoio.</p>
+              <h3 className="font-bold text-slate-200">Notificação</h3>
+              <p className="text-sm text-slate-500">Você poderá tentar acessar o sistema novamente em algumas horas.</p>
             </div>
           </div>
         </div>
@@ -89,19 +89,12 @@ export default function RegisterSuccessPage() {
         {/* Action Buttons */}
         <div className="flex flex-col gap-4 pt-4">
           <button
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push('/')}
             className="w-full py-4 bg-green-600 hover:bg-green-500 text-white font-bold text-lg rounded-xl shadow-lg shadow-green-900/20 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
           >
-            Ir para Meu Login
+            Voltar para o Início
             <ArrowRight className="w-5 h-5" />
           </button>
-          
-          <Link 
-            href="/profile"
-            className="text-slate-500 font-bold hover:text-white transition-colors"
-          >
-            Completar meu perfil
-          </Link>
         </div>
       </motion.div>
     </div>
