@@ -13,7 +13,7 @@ interface ConfirmationModalProps {
   description: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  type?: 'danger' | 'warning' | 'info';
+  type?: 'danger' | 'warning' | 'info' | 'success';
   icon?: React.ReactNode;
 }
 
@@ -33,6 +33,7 @@ export function ConfirmationModal({
     switch (type) {
       case 'danger': return <Trash2 className="w-8 h-8 text-red-500" />;
       case 'warning': return <Shield className="w-8 h-8 text-purple-500" />;
+      case 'success': return <Shield className="w-8 h-8 text-green-500" />;
       default: return <AlertCircle className="w-8 h-8 text-blue-500" />;
     }
   };
@@ -41,6 +42,7 @@ export function ConfirmationModal({
     switch (type) {
       case 'danger': return 'bg-red-500/20';
       case 'warning': return 'bg-purple-500/20';
+      case 'success': return 'bg-green-500/20';
       default: return 'bg-blue-500/20';
     }
   };
@@ -49,6 +51,7 @@ export function ConfirmationModal({
     switch (type) {
       case 'danger': return 'bg-red-600 hover:bg-red-500';
       case 'warning': return 'bg-purple-600 hover:bg-purple-500';
+      case 'success': return 'bg-green-600 hover:bg-green-500';
       default: return 'bg-blue-600 hover:bg-blue-500';
     }
   };

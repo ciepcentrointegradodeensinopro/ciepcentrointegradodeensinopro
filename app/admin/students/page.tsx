@@ -34,6 +34,7 @@ function StudentsContent() {
   const [search, setSearch] = React.useState('');
   const [filter, setFilter] = React.useState(searchParams.get('filter') || 'Todos');
   const [userToDelete, setUserToDelete] = React.useState<any>(null);
+  const [userToApprove, setUserToApprove] = React.useState<any>(null);
   const [roleToToggle, setRoleToToggle] = React.useState<{ id: string; currentRole: string; fullName: string } | null>(null);
   const [toast, setToast] = React.useState<{ message: string; isVisible: boolean; type: 'success' | 'error' }>({
     message: '',
@@ -74,6 +75,7 @@ function StudentsContent() {
     if (filter === 'Alunos') return matchesSearch && user.role === 'student';
     if (filter === 'Admins') return matchesSearch && user.role === 'admin';
     if (filter === 'Ativos') return matchesSearch && user.status === 'active';
+    if (filter === 'Pendentes') return matchesSearch && user.status === 'pending';
     if (filter === 'Inativos') return matchesSearch && user.status === 'inactive';
     return matchesSearch;
   });
@@ -116,6 +118,21 @@ function StudentsContent() {
     setRoleToToggle(null);
   };
 
+  const approveUser = async (id: string) => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ status: 'active' })
+      .eq('id', id);
+    
+    if (error) {
+      setToast({ message: 'Erro ao aprovar usuário', isVisible: true, type: 'error' });
+    } else {
+      setToast({ message: 'Usuário aprovado com sucesso!', isVisible: true, type: 'success' });
+      setUsers(users.map(u => u.id === id ? { ...u, status: 'active' } : u));
+    }
+    setUserToApprove(null);
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-white pb-24">
       <Toast 
@@ -142,32 +159,32 @@ function StudentsContent() {
             </Link>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <div className="relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-green-500 transition-colors w-5 h-5" />
-              <input 
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar por nome ou curso..."
-                className="w-full bg-slate-900 border-none rounded-xl py-3 pl-11 pr-4 focus:ring-2 focus:ring-green-500/50 text-base outline-none"
-              />
+            <div className="flex flex-col gap-3">
+              <div className="relative group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-green-500 transition-colors w-5 h-5" />
+                <input 
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar por nome ou curso..."
+                  className="w-full bg-slate-900 border-none rounded-xl py-3 pl-11 pr-4 focus:ring-2 focus:ring-green-500/50 text-base outline-none"
+                />
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                {['Todos', 'Alunos', 'Admins', 'Ativos', 'Pendentes', 'Inativos'].map((f) => (
+                  <button 
+                    key={f}
+                    onClick={() => setFilter(f)}
+                    className={cn(
+                      "whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-colors",
+                      filter === f ? "bg-green-500 text-white" : "bg-slate-900 text-slate-400 hover:bg-slate-800"
+                    )}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-              {['Todos', 'Alunos', 'Admins', 'Ativos', 'Inativos'].map((f) => (
-                <button 
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className={cn(
-                    "whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-colors",
-                    filter === f ? "bg-green-500 text-white" : "bg-slate-900 text-slate-400 hover:bg-slate-800"
-                  )}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </header>
 
@@ -197,7 +214,7 @@ function StudentsContent() {
                 )}
                 <span className={cn(
                   "absolute bottom-0 right-0 w-3.5 h-3.5 border-2 border-slate-900 rounded-full",
-                  user.status === 'active' ? "bg-green-500" : "bg-slate-500"
+                  user.status === 'active' ? "bg-green-500" : user.status === 'pending' ? "bg-amber-500" : "bg-slate-500"
                 )}></span>
               </div>
               <div className="flex-1 min-w-0">
@@ -212,9 +229,9 @@ function StudentsContent() {
                 <div className="mt-1 flex gap-2">
                   <span className={cn(
                     "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
-                    user.status === 'active' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+                    user.status === 'active' ? "bg-green-500/10 text-green-500" : user.status === 'pending' ? "bg-amber-500/10 text-amber-500" : "bg-red-500/10 text-red-500"
                   )}>
-                    {user.status === 'active' ? 'Ativo' : 'Inativo'}
+                    {user.status === 'active' ? 'Ativo' : user.status === 'pending' ? 'Pendente' : 'Inativo'}
                   </span>
                   <span className={cn(
                     "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
@@ -225,6 +242,15 @@ function StudentsContent() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
+                {user.status === 'pending' && (
+                  <button 
+                    onClick={() => setUserToApprove(user)}
+                    className="p-2 text-amber-500 hover:text-green-500 transition-colors"
+                    title="Aprovar Usuário"
+                  >
+                    <Shield className="w-5 h-5" />
+                  </button>
+                )}
                 <button 
                   onClick={() => setRoleToToggle({ id: user.id, currentRole: user.role, fullName: user.full_name })}
                   className="p-2 text-slate-500 hover:text-purple-500 transition-colors"
@@ -255,6 +281,16 @@ function StudentsContent() {
       </Link>
 
       <BottomNav isAdmin={isAdmin} />
+
+      <ConfirmationModal 
+        isOpen={!!userToApprove}
+        onClose={() => setUserToApprove(null)}
+        onConfirm={() => approveUser(userToApprove.id)}
+        title="Aprovar Usuário?"
+        description={`Deseja aprovar o cadastro de "${userToApprove?.full_name}"? O aluno terá acesso imediato ao sistema.`}
+        confirmLabel="Sim, Aprovar"
+        type="success"
+      />
 
       <ConfirmationModal 
         isOpen={!!userToDelete}

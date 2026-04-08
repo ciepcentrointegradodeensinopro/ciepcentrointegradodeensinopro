@@ -123,7 +123,7 @@ export default function RegisterPage() {
             full_name: formData.fullName,
             course: formData.course,
             turma: formData.classDay,
-            status: 'active'
+            status: 'pending'
           }
         }
       });
@@ -141,7 +141,7 @@ export default function RegisterPage() {
                   course: formData.course,
                   turma: formData.classDay,
                   role: 'student',
-                  status: 'active',
+                  status: 'pending',
                   avatar_url: avatarUrl,
                 },
               ], { onConflict: 'user_id' });

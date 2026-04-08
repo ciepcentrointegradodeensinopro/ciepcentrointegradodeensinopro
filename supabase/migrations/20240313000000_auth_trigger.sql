@@ -10,7 +10,7 @@ BEGIN
     COALESCE(new.raw_user_meta_data->>'role', 'student'),
     new.raw_user_meta_data->>'course',
     new.raw_user_meta_data->>'turma',
-    COALESCE(new.raw_user_meta_data->>'status', 'active')
+    COALESCE(new.raw_user_meta_data->>'status', 'pending')
   );
   RETURN new;
 END;

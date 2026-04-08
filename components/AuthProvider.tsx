@@ -239,12 +239,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Basic route protection
   useEffect(() => {
     if (!loading && isSupabaseConfigured) {
-      const publicRoutes = ['/', '/register', '/forgot-password', '/reset-password'];
+      const publicRoutes = ['/', '/register', '/forgot-password', '/reset-password', '/pending-approval'];
+      
       if (!user && pathname && !publicRoutes.includes(pathname)) {
         router.push('/');
+        return;
+      }
+
+      // Check for pending status
+      if (user && profile && profile.status === 'pending' && pathname !== '/pending-approval') {
+        // Admins are exempt from pending status check
+        const isAdminUser = profile?.role === 'admin' || (user?.email && adminEmails.includes(user.email));
+        if (!isAdminUser) {
+          router.push('/pending-approval');
+        }
       }
     }
-  }, [user, loading, pathname, router]);
+  }, [user, profile, loading, pathname, router]);
 
   const isAdmin = profile?.role === 'admin' || (user?.email && adminEmails.includes(user.email));
 
