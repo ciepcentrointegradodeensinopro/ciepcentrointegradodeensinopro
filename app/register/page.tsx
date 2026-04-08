@@ -343,7 +343,7 @@ export default function RegisterPage() {
                 <option value="">Selecione o curso</option>
                 <option value="Mecânica de Motos">Mecânica de Motos</option>
                 <option value="Mecânica Automotiva">Mecânica Automotiva</option>
-                <option value="Mecânica Elétrica">Mecânica Elétrica</option>
+                <option value="Elétrica Automotiva">Elétrica Automotiva</option>
               </select>
             </div>
 
