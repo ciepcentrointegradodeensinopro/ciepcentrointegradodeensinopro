@@ -18,15 +18,8 @@ export default function LoginPage() {
   const router = useRouter();
 
   React.useEffect(() => {
-    if (!authLoading && user) {
-      // If user is logged in, let AuthProvider handle the redirect based on status
-      // We only redirect to dashboard here if we are sure they are active
-      if (profile?.status === 'active' || isAdmin) {
-        router.push('/dashboard');
-      } else if (profile?.status === 'pending' || profile?.status === 'inactive') {
-        router.push('/pending-approval');
-      }
-    }
+    // AuthProvider handles all redirects for logged-in users.
+    // We don't need to do it here.
   }, [user, authLoading, profile, isAdmin, router]);
 
   if (authLoading) {

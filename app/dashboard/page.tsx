@@ -25,6 +25,15 @@ export default function Dashboard() {
   const [cardValidity, setCardValidity] = React.useState<{ isExpired: boolean, daysRemaining: number } | null>(null);
   const router = useRouter();
 
+  // Strict status check
+  React.useEffect(() => {
+    if (!authLoading && profile && !isAdmin) {
+      if (profile.status === 'pending' || profile.status === 'inactive') {
+        router.push('/pending-approval');
+      }
+    }
+  }, [profile, authLoading, isAdmin, router]);
+
   const fetchData = React.useCallback(async () => {
     console.log('Dashboard: fetchData called', { profileId: profile?.id, isAdmin });
     

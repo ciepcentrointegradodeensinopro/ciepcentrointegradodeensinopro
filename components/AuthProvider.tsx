@@ -144,9 +144,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         console.log('AuthProvider: Starting initialization');
         
-        // Check if we are in a browser environment
         if (typeof window === 'undefined') {
-          console.log('AuthProvider: Server-side rendering, skipping initialization');
           setLoading(false);
           return;
         }
@@ -156,43 +154,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (!isMounted) return;
 
         if (sessionError) {
-          console.error('AuthProvider: getSession error', sessionError.message);
-          if (
-            sessionError.message?.includes('Refresh Token') || 
-            sessionError.message?.includes('refresh_token_not_found') ||
-            sessionError.status === 400 || 
-            sessionError.status === 401
-          ) {
-             await clearSession();
-             return;
-          }
-          throw sessionError;
+          await clearSession();
+          return;
         }
 
         const session = data.session;
         if (session?.user) {
-          console.log('AuthProvider: Initial session found', session.user.id);
           setUser(session.user);
           const profileData = await fetchProfile(session.user.id, session.user.email);
-          if (isMounted) setProfile(profileData);
-        } else {
-          console.log('AuthProvider: No initial session');
-          setUser(null);
-          setProfile(null);
+          if (isMounted) {
+            setProfile(profileData);
+            
+            // Check status immediately before setting loading to false
+            const isAdminUser = profileData?.role === 'admin' || (session.user.email && adminEmails.includes(session.user.email));
+            const publicRoutes = ['/', '/register', '/forgot-password', '/reset-password', '/pending-approval', '/register/success', '/verify'];
+            const isPublicRoute = pathnameRef.current && publicRoutes.includes(pathnameRef.current);
+
+            if (!isAdminUser && (profileData?.status === 'pending' || profileData?.status === 'inactive') && pathnameRef.current !== '/pending-approval') {
+              setIsRedirecting(true);
+              router.push('/pending-approval');
+            }
+          }
         }
       } catch (error: any) {
         console.error('AuthProvider: Initialization error', error);
-        if (isMounted) {
-          if (error?.message?.includes('Refresh Token') || error?.status === 400 || error?.status === 401) {
-            await clearSession();
-          } else {
-            setUser(null);
-            setProfile(null);
-          }
-        }
+        if (isMounted) await clearSession();
       } finally {
         if (isMounted) {
-          console.log('AuthProvider: Initialization finally block');
           setLoading(false);
           clearTimeout(timeout);
         }
@@ -214,7 +202,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(session.user);
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
             const profileData = await fetchProfile(session.user.id, session.user.email);
-            if (isMounted) setProfile(profileData);
+            if (isMounted) {
+              setProfile(profileData);
+              
+              // Check status immediately
+              const isAdminUser = profileData?.role === 'admin' || (session.user.email && adminEmails.includes(session.user.email));
+              const publicRoutes = ['/', '/register', '/forgot-password', '/reset-password', '/pending-approval', '/register/success', '/verify'];
+              const isPublicRoute = pathnameRef.current && publicRoutes.includes(pathnameRef.current);
+
+              if (!isAdminUser && (profileData?.status === 'pending' || profileData?.status === 'inactive') && pathnameRef.current !== '/pending-approval') {
+                setIsRedirecting(true);
+                router.push('/pending-approval');
+              }
+            }
           }
         }
       } catch (err) {
@@ -240,7 +240,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Basic route protection
   useEffect(() => {
     if (!loading && isSupabaseConfigured) {
-      const publicRoutes = ['/', '/register', '/forgot-password', '/reset-password', '/pending-approval'];
+      const publicRoutes = ['/', '/register', '/forgot-password', '/reset-password', '/pending-approval', '/register/success', '/verify'];
       const isPublicRoute = pathname && publicRoutes.includes(pathname);
       
       // 1. If not logged in and trying to access private route -> redirect to home

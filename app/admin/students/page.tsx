@@ -3,7 +3,7 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { ArrowLeft, Search, Plus, Eye, Edit2, Trash2, Shield } from 'lucide-react';
+import { ArrowLeft, Search, Plus, Eye, Edit2, Trash2, Shield, UserCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -241,30 +241,33 @@ function StudentsContent() {
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 {user.status === 'pending' && (
                   <button 
                     onClick={() => setUserToApprove(user)}
-                    className="p-2 text-amber-500 hover:text-green-500 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider border border-amber-500/20"
                     title="Aprovar Usuário"
+                  >
+                    <UserCheck className="w-3.5 h-3.5" />
+                    Aprovar
+                  </button>
+                )}
+                <div className="flex items-center gap-1">
+                  <button 
+                    onClick={() => setRoleToToggle({ id: user.id, currentRole: user.role, fullName: user.full_name })}
+                    className="p-2 text-slate-500 hover:text-purple-500 transition-colors"
+                    title="Alterar Cargo"
                   >
                     <Shield className="w-5 h-5" />
                   </button>
-                )}
-                <button 
-                  onClick={() => setRoleToToggle({ id: user.id, currentRole: user.role, fullName: user.full_name })}
-                  className="p-2 text-slate-500 hover:text-purple-500 transition-colors"
-                  title="Alterar Cargo"
-                >
-                  <Shield className="w-5 h-5" />
-                </button>
-                <button 
-                  onClick={() => setUserToDelete(user)}
-                  className="p-2 text-slate-500 hover:text-red-500 transition-colors"
-                  title="Excluir"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
+                  <button 
+                    onClick={() => setUserToDelete(user)}
+                    className="p-2 text-slate-500 hover:text-red-500 transition-colors"
+                    title="Excluir"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
             </div>
           </motion.div>

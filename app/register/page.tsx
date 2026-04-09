@@ -72,9 +72,9 @@ export default function RegisterPage() {
   };
 
   React.useEffect(() => {
-    if (!authLoading && user) {
-      router.push('/dashboard');
-    }
+    // We don't redirect to dashboard here anymore.
+    // AuthProvider will handle redirects for logged-in users.
+    // This allows the user to see the success state of the registration.
   }, [user, authLoading, router]);
 
   if (authLoading) {
