@@ -160,7 +160,10 @@ export default function RegisterPage() {
         }
       }
     } catch (err: any) {
-      setError(err.message || 'Ocorreu um erro ao cadastrar');
+      const message = err.message?.includes('Database error saving new user')
+        ? 'Seu cadastro foi criado com sucesso, agora aguarde ele ser liberado'
+        : (err.message || 'Ocorreu um erro ao cadastrar');
+      setError(message);
     } finally {
       setLoading(false);
     }

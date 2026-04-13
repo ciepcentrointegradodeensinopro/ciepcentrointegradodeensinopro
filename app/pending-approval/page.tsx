@@ -45,7 +45,7 @@ export default function PendingApprovalPage() {
             Olá, <span className="text-white font-bold">{profile?.full_name || 'Estudante'}</span>! 
             {isInactive 
               ? 'Sua conta está atualmente inativa. Entre em contato com a administração para mais informações.'
-              : 'Seu cadastro foi realizado com sucesso, mas por medidas de segurança, sua conta precisa ser aprovada por um administrador antes de você acessar o sistema.'}
+              : 'Seu cadastro foi criado com sucesso, agora aguarde ele ser liberado por um administrador.'}
           </p>
         </div>
 

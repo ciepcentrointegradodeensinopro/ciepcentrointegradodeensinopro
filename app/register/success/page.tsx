@@ -60,7 +60,7 @@ export default function RegisterSuccessPage() {
         <div className="space-y-4">
           <h1 className="text-4xl font-extrabold tracking-tight">Cadastro Realizado!</h1>
           <p className="text-slate-400 text-lg leading-relaxed">
-            Sua conta foi criada com sucesso. Por medidas de segurança, seu acesso será liberado após a aprovação de um administrador.
+            Seu cadastro foi criado com sucesso, agora aguarde ele ser liberado por um administrador.
           </p>
         </div>
 
