@@ -279,6 +279,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
+        // 3. If on home page and logged in, redirect to dashboard
+        if (pathname === '/' && (isAdminUser || profile?.status === 'active')) {
+          console.log('AuthProvider: Logged in user on home page, redirecting to dashboard');
+          setIsRedirecting(true);
+          router.push('/dashboard');
+          return;
+        }
+
         // Check for pending or inactive status
         if ((profile?.status === 'pending' || profile?.status === 'inactive') && pathname !== '/pending-approval') {
           console.log(`AuthProvider: User with status ${profile?.status} detected, redirecting to approval page`);
