@@ -9,7 +9,7 @@ import { useAuth } from '@/components/AuthProvider';
 import Image from 'next/image';
 
 export default function LoginPage() {
-  const { user, profile, isAdmin, loading: authLoading } = useAuth();
+  const { user, profile, isAdmin, loading: authLoading, signOut } = useAuth();
   const [showPassword, setShowPassword] = React.useState(false);
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -18,10 +18,20 @@ export default function LoginPage() {
   const router = useRouter();
 
   React.useEffect(() => {
+    console.log('LoginPage: Auth State Check', { 
+      hasUser: !!user, 
+      authLoading, 
+      hasProfile: !!profile, 
+      status: profile?.status,
+      isAdmin 
+    });
+
     if (!authLoading && user) {
       if (isAdmin || profile?.status === 'active') {
+        console.log('LoginPage: Redirecting to dashboard');
         router.push('/dashboard');
       } else if (profile?.status === 'pending' || profile?.status === 'inactive') {
+        console.log('LoginPage: Redirecting to pending approval');
         router.push('/pending-approval');
       }
     }
@@ -112,7 +122,31 @@ export default function LoginPage() {
         {/* Welcome Text */}
         <div className="px-6 pt-8 pb-2 text-center">
           <h1 className="text-white text-3xl font-bold">Bem-vindo ao AVA</h1>
+          <div className="mt-2 inline-flex items-center gap-2 px-2 py-1 bg-green-500/10 border border-green-500/20 rounded-full">
+            <div className="size-1.5 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest">Sistema de Segurança v2.1</span>
+          </div>
         </div>
+
+        {user && (
+          <div className="mx-6 mt-4 p-4 bg-blue-500/10 border border-blue-500/50 rounded-xl text-blue-400 text-xs font-medium flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span>Usuário detectado: {user.email}</span>
+              <button onClick={() => signOut()} className="text-blue-500 underline">Sair</button>
+            </div>
+            {isAdmin ? (
+              <div className="text-green-500 font-bold">Acesso Administrativo Identificado. Redirecionando...</div>
+            ) : (
+              <div>Status: {profile?.status || 'Carregando perfil...'}</div>
+            )}
+            <button 
+              onClick={() => router.push('/dashboard')}
+              className="mt-2 w-full py-2 bg-blue-600 text-white rounded-lg font-bold"
+            >
+              Forçar Entrada no Dashboard
+            </button>
+          </div>
+        )}
 
         {error && (
           <div className="mx-6 mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-red-500 text-sm font-medium">

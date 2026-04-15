@@ -27,6 +27,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const pathnameRef = React.useRef(pathname);
@@ -166,7 +167,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setProfile(profileData);
             
             // Check status immediately before setting loading to false
-            const isAdminUser = profileData?.role === 'admin' || (session.user.email && adminEmails.some(e => e.toLowerCase() === session.user.email.toLowerCase()));
+            const isAdminUser = profileData?.role === 'admin' || (session.user.email && adminEmails.some(e => e.toLowerCase() === session.user.email?.toLowerCase()));
             const publicRoutes = ['/', '/register', '/forgot-password', '/reset-password', '/pending-approval', '/register/success', '/verify'];
             const isPublicRoute = pathnameRef.current && publicRoutes.includes(pathnameRef.current);
 
@@ -189,6 +190,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     initialize();
 
+    // Safety timeout for redirects
+    useEffect(() => {
+      if (isRedirecting) {
+        const timer = setTimeout(() => {
+          console.log('AuthProvider: Redirect timeout reached, forcing isRedirecting false');
+          setIsRedirecting(false);
+        }, 5000);
+        return () => clearTimeout(timer);
+      }
+    }, [isRedirecting]);
+
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('AuthProvider: onAuthStateChange', event, session?.user?.id);
       
@@ -206,7 +218,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               setProfile(profileData);
               
               // Check status immediately
-              const isAdminUser = profileData?.role === 'admin' || (session.user.email && adminEmails.some(e => e.toLowerCase() === session.user.email.toLowerCase()));
+              const isAdminUser = profileData?.role === 'admin' || (session.user.email && adminEmails.some(e => e.toLowerCase() === session.user.email?.toLowerCase()));
               const publicRoutes = ['/', '/register', '/forgot-password', '/reset-password', '/pending-approval', '/register/success', '/verify'];
               const isPublicRoute = pathnameRef.current && publicRoutes.includes(pathnameRef.current);
 
@@ -253,7 +265,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       // 2. If logged in, check profile and status
       if (user) {
-        const isAdminUser = profile?.role === 'admin' || (user?.email && adminEmails.some(e => e.toLowerCase() === user.email.toLowerCase()));
+        const isAdminUser = profile?.role === 'admin' || (user?.email && adminEmails.some(e => e.toLowerCase() === user.email?.toLowerCase()));
         
         // If on home page and logged in, redirect to dashboard
         if (pathname === '/') {
@@ -309,7 +321,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [user, profile, loading, pathname, router, fetchProfile]);
 
-  const isAdmin = profile?.role === 'admin' || (user?.email && adminEmails.some(e => e.toLowerCase() === user.email.toLowerCase()));
+  const isAdmin = profile?.role === 'admin' || (user?.email && adminEmails.some(e => e.toLowerCase() === user.email?.toLowerCase()));
 
   const signOut = async () => {
     try {
