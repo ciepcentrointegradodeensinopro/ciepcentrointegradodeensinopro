@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // Auto-upgrade admin role if email matches
-      if (userEmail && adminEmails.includes(userEmail) && data.role !== 'admin') {
+      if (userEmail && adminEmails.some(e => e.toLowerCase() === userEmail.toLowerCase()) && data.role !== 'admin') {
         console.log('AuthProvider: Auto-upgrading admin role in database');
         const { data: updatedData, error: updateError } = await supabase
           .from('profiles')
@@ -166,7 +166,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setProfile(profileData);
             
             // Check status immediately before setting loading to false
-            const isAdminUser = profileData?.role === 'admin' || (session.user.email && adminEmails.includes(session.user.email));
+            const isAdminUser = profileData?.role === 'admin' || (session.user.email && adminEmails.some(e => e.toLowerCase() === session.user.email.toLowerCase()));
             const publicRoutes = ['/', '/register', '/forgot-password', '/reset-password', '/pending-approval', '/register/success', '/verify'];
             const isPublicRoute = pathnameRef.current && publicRoutes.includes(pathnameRef.current);
 
@@ -206,7 +206,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               setProfile(profileData);
               
               // Check status immediately
-              const isAdminUser = profileData?.role === 'admin' || (session.user.email && adminEmails.includes(session.user.email));
+              const isAdminUser = profileData?.role === 'admin' || (session.user.email && adminEmails.some(e => e.toLowerCase() === session.user.email.toLowerCase()));
               const publicRoutes = ['/', '/register', '/forgot-password', '/reset-password', '/pending-approval', '/register/success', '/verify'];
               const isPublicRoute = pathnameRef.current && publicRoutes.includes(pathnameRef.current);
 
@@ -253,8 +253,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       // 2. If logged in, check profile and status
       if (user) {
-        const isAdminUser = profile?.role === 'admin' || (user?.email && adminEmails.includes(user.email));
+        const isAdminUser = profile?.role === 'admin' || (user?.email && adminEmails.some(e => e.toLowerCase() === user.email.toLowerCase()));
         
+        // If on home page and logged in, redirect to dashboard
+        if (pathname === '/') {
+          if (isAdminUser || profile?.status === 'active') {
+            console.log('AuthProvider: Logged in user on home page, redirecting to dashboard');
+            setIsRedirecting(true);
+            router.push('/dashboard');
+            return;
+          }
+        }
+
         if (isAdminUser) {
           console.log('AuthProvider: Admin user detected, allowing access');
           setIsRedirecting(false);
@@ -279,14 +289,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        // 3. If on home page and logged in, redirect to dashboard
-        if (pathname === '/' && (isAdminUser || profile?.status === 'active')) {
-          console.log('AuthProvider: Logged in user on home page, redirecting to dashboard');
-          setIsRedirecting(true);
-          router.push('/dashboard');
-          return;
-        }
-
         // Check for pending or inactive status
         if ((profile?.status === 'pending' || profile?.status === 'inactive') && pathname !== '/pending-approval') {
           console.log(`AuthProvider: User with status ${profile?.status} detected, redirecting to approval page`);
@@ -307,7 +309,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [user, profile, loading, pathname, router, fetchProfile]);
 
-  const isAdmin = profile?.role === 'admin' || (user?.email && adminEmails.includes(user.email));
+  const isAdmin = profile?.role === 'admin' || (user?.email && adminEmails.some(e => e.toLowerCase() === user.email.toLowerCase()));
 
   const signOut = async () => {
     try {

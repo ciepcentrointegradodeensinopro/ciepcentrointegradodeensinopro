@@ -18,8 +18,13 @@ export default function LoginPage() {
   const router = useRouter();
 
   React.useEffect(() => {
-    // AuthProvider handles all redirects for logged-in users.
-    // We don't need to do it here.
+    if (!authLoading && user) {
+      if (isAdmin || profile?.status === 'active') {
+        router.push('/dashboard');
+      } else if (profile?.status === 'pending' || profile?.status === 'inactive') {
+        router.push('/pending-approval');
+      }
+    }
   }, [user, authLoading, profile, isAdmin, router]);
 
   if (authLoading) {
@@ -47,12 +52,14 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      console.log('LoginPage: Attempting login for', email);
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (authError) {
+        console.error('LoginPage: Auth error', authError);
         if (authError.message.includes('Email not confirmed')) {
           setError(
             <div className="flex flex-col gap-1">
