@@ -32,6 +32,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const pathnameRef = React.useRef(pathname);
 
+  // Safety timeout for redirects
+  useEffect(() => {
+    if (isRedirecting) {
+      const timer = setTimeout(() => {
+        console.log('AuthProvider: Redirect timeout reached, forcing isRedirecting false');
+        setIsRedirecting(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isRedirecting]);
+
   useEffect(() => {
     pathnameRef.current = pathname;
   }, [pathname]);
@@ -189,17 +200,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     initialize();
-
-    // Safety timeout for redirects
-    useEffect(() => {
-      if (isRedirecting) {
-        const timer = setTimeout(() => {
-          console.log('AuthProvider: Redirect timeout reached, forcing isRedirecting false');
-          setIsRedirecting(false);
-        }, 5000);
-        return () => clearTimeout(timer);
-      }
-    }, [isRedirecting]);
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('AuthProvider: onAuthStateChange', event, session?.user?.id);
