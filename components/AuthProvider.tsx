@@ -57,7 +57,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .single();
       
       if (error) {
-        console.log('AuthProvider: Profile fetch error (expected if new user)', error.message);
+        if (error.code === 'PGRST116') { // Not found
+          console.log('AuthProvider: Profile not found, attempting auto-create...');
+          const isAdminByEmail = userEmail && adminEmails.some(e => e.toLowerCase() === userEmail.toLowerCase());
+          
+          const { data: newData, error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              user_id: userId,
+              full_name: userEmail?.split('@')[0] || 'Usuário',
+              email: userEmail,
+              role: isAdminByEmail ? 'admin' : 'student',
+              status: isAdminByEmail ? 'active' : 'pending',
+              course: 'Não definido',
+              turma: 'Não definido'
+            })
+            .select()
+            .single();
+          
+          if (!createError) {
+            console.log('AuthProvider: Profile auto-created successfully');
+            return newData;
+          } else {
+            console.error('AuthProvider: Error auto-creating profile', createError);
+          }
+        }
+        console.log('AuthProvider: Profile fetch error', error.message);
         return null;
       }
 

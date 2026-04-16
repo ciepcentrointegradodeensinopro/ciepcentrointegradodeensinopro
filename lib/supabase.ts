@@ -25,8 +25,11 @@ export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey && supabas
 
 export const getSupabaseAdmin = () => {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  
   if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('Supabase configuration is missing. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
+    console.error('getSupabaseAdmin: Missing configuration', { url: !!supabaseUrl, key: !!serviceRoleKey });
+    return null;
   }
   return createClient(supabaseUrl, serviceRoleKey, {
     auth: {

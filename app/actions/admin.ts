@@ -7,6 +7,13 @@ export async function syncUsersAction() {
   try {
     const supabaseAdmin = getSupabaseAdmin();
     
+    if (!supabaseAdmin) {
+      return { 
+        success: false, 
+        error: 'Chave de serviço (SUPABASE_SERVICE_ROLE_KEY) não encontrada nas configurações. Para sincronizar o banco, você precisa adicionar esta chave no menu de Configurações (Settings).' 
+      };
+    }
+    
     // 1. Get all users from auth.users
     const { data: { users: authUsers }, error: authError } = await supabaseAdmin.auth.admin.listUsers();
     
