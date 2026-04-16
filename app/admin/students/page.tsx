@@ -31,6 +31,7 @@ function StudentsContent() {
   }, [authLoading, isAdmin, router]);
   const [users, setUsers] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState('');
   const [filter, setFilter] = React.useState(searchParams.get('filter') || 'Todos');
   const [userToDelete, setUserToDelete] = React.useState<any>(null);
@@ -44,19 +45,29 @@ function StudentsContent() {
 
   const fetchUsers = React.useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const { data, error } = await supabase
+      console.log('StudentsPage: Fetching users...');
+      const { data, error: supabaseError } = await supabase
         .from('profiles')
         .select('*')
         .order('full_name', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching users:', error);
+      if (supabaseError) {
+        console.error('StudentsPage: Error fetching users:', supabaseError);
+        setError(supabaseError.message);
+        setToast({ 
+          message: `Erro ao carregar usuários: ${supabaseError.message}`, 
+          isVisible: true, 
+          type: 'error' 
+        });
       } else {
+        console.log('StudentsPage: Users fetched successfully', data?.length || 0, 'users found');
         setUsers(data || []);
       }
-    } catch (err) {
-      console.error('Exception fetching users:', err);
+    } catch (err: any) {
+      console.error('StudentsPage: Exception fetching users:', err);
+      setError(err.message || 'Erro desconhecido');
     } finally {
       setLoading(false);
     }
@@ -67,9 +78,14 @@ function StudentsContent() {
   }, [fetchUsers]);
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.full_name?.toLowerCase().includes(search.toLowerCase()) || 
-                          user.course?.toLowerCase().includes(search.toLowerCase()) ||
-                          user.email?.toLowerCase().includes(search.toLowerCase());
+    const fullName = user.full_name || '';
+    const course = user.course || '';
+    const email = user.email || '';
+    const searchLower = search.toLowerCase();
+
+    const matchesSearch = fullName.toLowerCase().includes(searchLower) || 
+                          course.toLowerCase().includes(searchLower) ||
+                          email.toLowerCase().includes(searchLower);
     
     if (filter === 'Todos') return matchesSearch;
     if (filter === 'Alunos') return matchesSearch && user.role === 'student';
@@ -148,7 +164,14 @@ function StudentsContent() {
               <Link href="/dashboard" className="p-2 rounded-full hover:bg-slate-800 transition-colors">
                 <ArrowLeft className="w-6 h-6" />
               </Link>
-              <h1 className="text-xl font-bold tracking-tight">Gerenciar Usuários</h1>
+              <div>
+                <h1 className="text-xl font-bold">Gerenciar Usuários</h1>
+                {!loading && (
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                    {users.length} usuários no total
+                  </p>
+                )}
+              </div>
             </div>
             <Link 
               href="/admin/students/add"
@@ -189,7 +212,23 @@ function StudentsContent() {
       </header>
 
       <main className="max-w-md mx-auto px-4 py-4 space-y-3">
-        {loading ? (
+        {error ? (
+          <div className="bg-red-500/10 border border-red-500/50 p-6 rounded-2xl text-center space-y-4">
+            <div className="size-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto">
+              <AlertCircle className="w-6 h-6 text-red-500" />
+            </div>
+            <div>
+              <h3 className="text-red-500 font-bold uppercase tracking-widest text-[10px]">Erro Crítico</h3>
+              <p className="text-slate-300 text-sm mt-1">{error}</p>
+            </div>
+            <button 
+              onClick={() => fetchUsers()}
+              className="w-full py-3 bg-red-500 text-white rounded-xl font-bold text-sm"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        ) : loading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
           </div>
