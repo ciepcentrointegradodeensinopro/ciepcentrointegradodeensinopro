@@ -3,7 +3,8 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { ArrowLeft, Search, Plus, Eye, Edit2, Trash2, Shield, UserCheck } from 'lucide-react';
+import { syncUsersAction } from '@/app/actions/admin';
+import { ArrowLeft, Search, Plus, Eye, Edit2, Trash2, Shield, UserCheck, RefreshCw, AlertCircle, Users } from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -42,6 +43,25 @@ function StudentsContent() {
     isVisible: false,
     type: 'success'
   });
+
+  const [isSyncing, setIsSyncing] = React.useState(false);
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      const result = await syncUsersAction();
+      if (result.success) {
+        setToast({ message: `Sincronização concluída! ${result.count} usuários verificados.`, isVisible: true, type: 'success' });
+        fetchUsers();
+      } else {
+        setToast({ message: `Erro na sincronização: ${result.error}`, isVisible: true, type: 'error' });
+      }
+    } catch (err: any) {
+      setToast({ message: `Exceção na sincronização: ${err.message}`, isVisible: true, type: 'error' });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const fetchUsers = React.useCallback(async () => {
     setLoading(true);
@@ -311,7 +331,25 @@ function StudentsContent() {
             </div>
           </motion.div>
         )) : (
-          <p className="text-center text-slate-500 py-12">Nenhum usuário encontrado.</p>
+          <div className="bg-slate-900/30 border border-slate-800/50 p-12 rounded-2xl text-center space-y-4">
+            <div className="size-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto opacity-50">
+              <Users className="w-8 h-8 text-slate-400" />
+            </div>
+            <div>
+              <h3 className="text-slate-200 font-bold capitalize">Nenhum aluno encontrado</h3>
+              <p className="text-slate-500 text-sm mt-1 max-w-[200px] mx-auto">
+                Se você sabe que existem usuários criados, eles podem estar fora de sincronia com a lista de alunos.
+              </p>
+            </div>
+            <button 
+              onClick={handleSync}
+              disabled={isSyncing}
+              className="mt-4 flex items-center gap-2 px-6 py-2.5 bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white rounded-xl font-bold text-xs transition-all mx-auto border border-green-500/20 disabled:opacity-50"
+            >
+              <RefreshCw className={cn("w-4 h-4", isSyncing && "animate-spin")} />
+              {isSyncing ? "Sincronizando..." : "Sincronizar Banco de Dados"}
+            </button>
+          </div>
         )}
       </main>
 
