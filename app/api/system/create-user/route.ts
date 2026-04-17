@@ -47,6 +47,10 @@ export async function POST(request: Request) {
     // 3. Initialize Supabase Admin Client
     const supabaseAdmin = getSupabaseAdmin();
 
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Server configuration error: Admin client not available' }, { status: 500 });
+    }
+
     // 4. Create user in Supabase Auth
     const { data: authUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
