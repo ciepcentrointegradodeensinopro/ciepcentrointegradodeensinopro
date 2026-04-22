@@ -52,7 +52,11 @@ function StudentsContent() {
     try {
       const result = await syncUsersAction(manualKey || undefined);
       if (result.success) {
-        setToast({ message: `Sincronização concluída! ${result.count} usuários verificados.`, isVisible: true, type: 'success' });
+        setToast({ 
+          message: result.message || `Sincronização concluída! ${result.count} usuários verificados.`, 
+          isVisible: true, 
+          type: 'success' 
+        });
         setManualKey('');
         setShowManualKeyInput(false);
         fetchUsers();

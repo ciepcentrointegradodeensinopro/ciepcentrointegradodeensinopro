@@ -3,17 +3,17 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 export async function syncUsersAction(manualKey?: string) {
-  console.log('AdminAction: Starting verbose user sync...');
+  console.log('AdminAction: Starting exhaustive user sync...');
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  
   try {
-    // Usa a chave manual se fornecida, senão tenta as variáveis de ambiente
     let supabaseAdmin = null;
     
     if (manualKey) {
       console.log('AdminAction: Using manual key for sync');
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       if (supabaseUrl) {
         const { createClient } = await import('@supabase/supabase-js');
-        supabaseAdmin = createClient(supabaseUrl, manualKey, {
+        supabaseAdmin = createClient(supabaseUrl, manualKey.trim(), {
           auth: { autoRefreshToken: false, persistSession: false }
         });
       }
@@ -24,20 +24,31 @@ export async function syncUsersAction(manualKey?: string) {
     if (!supabaseAdmin) {
       return { 
         success: false, 
-        error: 'Configuração Incompleta: Para sincronizar, você precisa adicionar a chave SUPABASE_SERVICE_ROLE_KEY no menu Settings ou inseri-la manualmente no campo de resgate.' 
+        error: `Configuração Incompleta: URL=${supabaseUrl ? 'OK' : 'AUSENTE'}. Forneça a chave service_role manualmente ou verifique as variáveis de ambiente.` 
       };
     }
     
-    // 1. Get all users from auth.users (including those not yet confirmed)
-    const { data: { users: authUsers }, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+    console.log(`AdminAction: Requesting user list from: ${supabaseUrl?.substring(0, 15)}...`);
+    // 1. Get all users from auth.users
+    const { data, error: authError } = await supabaseAdmin.auth.admin.listUsers();
     
     if (authError) {
-      console.error('AdminAction: Error listing auth users', authError);
-      return { success: false, error: `Erro ao listar usuários do Auth: ${authError.message}` };
+      console.error('AdminAction: Auth error details:', authError);
+      return { 
+        success: false, 
+        error: `Erro Supabase Auth (${authError.status}): ${authError.message}. Verifique se a chave é a Service Role (não a Anon Key).` 
+      };
     }
 
-    if (!authUsers || authUsers.length === 0) {
-      return { success: true, count: 0, message: 'Nenhum usuário encontrado no sistema de autenticação.' };
+    const authUsers = data?.users || [];
+    console.log(`AdminAction: Auth returned ${authUsers.length} users.`);
+
+    if (authUsers.length === 0) {
+      return { 
+        success: true, 
+        count: 0, 
+        message: `Sincronização concluída, mas 0 usuários foram encontrados no Auth do Supabase (${supabaseUrl?.substring(0, 20)}...).` 
+      };
     }
 
     console.log(`AdminAction: Found ${authUsers.length} users in Auth. Syncing profiles...`);
