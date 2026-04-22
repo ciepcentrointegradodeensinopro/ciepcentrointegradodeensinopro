@@ -193,50 +193,64 @@ export default function UploadMaterialPage() {
     }
 
     setLoading(true);
+    setToast({ message: 'Iniciando publicação...', isVisible: true, type: 'success' });
     
-    // Timer de segurança para evitar carregamento infinito
+    // Timer de segurança TOTALMENTE independente
     const safetyTimeout = setTimeout(() => {
-      if (loading) {
-        setLoading(false);
-        setToast({
-          message: 'O servidor está demorando muito para responder. Por favor, tente novamente ou verifique sua conexão.',
-          isVisible: true,
-          type: 'error'
-        });
-      }
+      setLoading(false);
+      setToast({
+        message: 'Tempo esgotado! O servidor não respondeu. Tente atualizar a página (F5).',
+        isVisible: true,
+        type: 'error'
+      });
+      console.error('UploadMaterialPage: Safety timeout triggered (15s)');
     }, 15000);
 
     try {
-      console.log('UploadMaterialPage: Publishing material...', { title, category, discipline, turma });
+      console.log('UploadMaterialPage: Step 1 - Getting User');
+      setToast({ message: 'Verificando permissões...', isVisible: true, type: 'success' });
       
       const { data: authData, error: authError } = await supabase.auth.getUser();
       if (authError || !authData?.user) {
-        throw new Error(authError?.message || 'Usuário não autenticado.');
+        throw new Error(authError?.message || 'Sua sessão expirou. Por favor, saia e entre novamente.');
       }
 
-      const { error } = await supabase.from('materials').insert({
-        title,
-        discipline,
-        turma,
-        category,
-        description,
+      console.log('UploadMaterialPage: Step 2 - Inserting into materials');
+      setToast({ message: 'Enviando para o banco de dados...', isVisible: true, type: 'success' });
+
+      // Verificação extra de campos para evitar nulos problemáticos
+      const payload = {
+        title: title.trim(),
+        discipline: discipline || 'Geral',
+        turma: turma || 'Todas',
+        category: category || 'pdf',
+        description: description.trim() || '',
         file_url: fileUrl,
         type: category === 'vid' ? 'Video' : 'PDF',
         status: isVisible ? 'active' : 'pending'
-      });
+      };
 
-      if (error) {
-        console.error('UploadMaterialPage: Insert error', error);
+      const { data, error: insertError } = await supabase
+        .from('materials')
+        .insert([payload])
+        .select();
+
+      if (insertError) {
+        console.error('UploadMaterialPage: Insert error details', insertError);
         
-        // Detecta especificamente erro de coluna ausente
-        if (error.message.includes('column') && error.message.includes('turma')) {
-          throw new Error('Erro de Banco de Dados: A coluna "turma" não existe. Por favor, execute o comando SQL no Supabase para continuar.');
+        if (insertError.code === '42703' || insertError.message.includes('turma')) {
+          throw new Error('ERRO DE BANCO: A coluna "turma" não foi encontrada. Você precisa rodar o comando SQL no painel do Supabase.');
         }
         
-        throw error;
+        if (insertError.code === '42501') {
+          throw new Error('ERRO DE PERMISSÃO: Você é administrador, mas seu perfil não tem permissão de escrita. Verifique se o seu perfil na tabela "profiles" está como "admin".');
+        }
+
+        throw new Error(insertError.message || 'Erro desconhecido ao inserir material');
       }
 
-      console.log('UploadMaterialPage: Success!');
+      console.log('UploadMaterialPage: Step 3 - Success');
+      clearTimeout(safetyTimeout);
       setShowSuccess(true);
       setToast({
         message: 'Material publicado com sucesso!',
@@ -244,7 +258,7 @@ export default function UploadMaterialPage() {
         type: 'success'
       });
       
-      // Clear form
+      // Limpeza
       setTitle('');
       setFileUrl('');
       setFileName('');
@@ -256,15 +270,16 @@ export default function UploadMaterialPage() {
       setTimeout(() => {
         router.push('/materials');
       }, 2000);
+
     } catch (error: any) {
-      console.error('UploadMaterialPage: Publish exception', error);
+      clearTimeout(safetyTimeout);
+      console.error('UploadMaterialPage: Error caught', error);
       setToast({
-        message: 'Erro ao publicar: ' + (error.message || 'Erro desconhecido'),
+        message: error.message || 'Ocorreu um erro inesperado',
         isVisible: true,
         type: 'error'
       });
     } finally {
-      clearTimeout(safetyTimeout);
       setLoading(false);
     }
   };
