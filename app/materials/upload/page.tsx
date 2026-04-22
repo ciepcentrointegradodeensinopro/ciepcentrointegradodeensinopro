@@ -182,43 +182,36 @@ export default function UploadMaterialPage() {
     }
   };
 
+  const [debugStep, setDebugStep] = React.useState('');
+
   const handlePublish = async () => {
     if (!title || !fileUrl) {
-      setToast({
-        message: 'Por favor, preencha o título e selecione um arquivo.',
-        isVisible: true,
-        type: 'error'
-      });
+      setToast({ message: 'Preencha o título e selecione um arquivo.', isVisible: true, type: 'error' });
       return;
     }
 
     setLoading(true);
-    setToast({ message: 'Iniciando publicação...', isVisible: true, type: 'success' });
+    setDebugStep('1. Iniciando...');
     
-    // Timer de segurança TOTALMENTE independente
     const safetyTimeout = setTimeout(() => {
       setLoading(false);
+      setDebugStep('Erro: Tempo esgotado na etapa ' + debugStep);
       setToast({
-        message: 'Tempo esgotado! O servidor não respondeu. Tente atualizar a página (F5).',
+        message: 'O servidor não respondeu a tempo. Verifique sua chave service_role e o banco.',
         isVisible: true,
         type: 'error'
       });
-      console.error('UploadMaterialPage: Safety timeout triggered (15s)');
     }, 15000);
 
     try {
-      console.log('UploadMaterialPage: Step 1 - Getting User');
-      setToast({ message: 'Verificando permissões...', isVisible: true, type: 'success' });
+      setDebugStep('2. Verificando sessão...');
+      const { data: { session } } = await supabase.auth.getSession();
       
-      const { data: authData, error: authError } = await supabase.auth.getUser();
-      if (authError || !authData?.user) {
-        throw new Error(authError?.message || 'Sua sessão expirou. Por favor, saia e entre novamente.');
+      if (!session) {
+        throw new Error('Sessão não encontrada. Por favor, faça login novamente.');
       }
 
-      console.log('UploadMaterialPage: Step 2 - Inserting into materials');
-      setToast({ message: 'Enviando para o banco de dados...', isVisible: true, type: 'success' });
-
-      // Verificação extra de campos para evitar nulos problemáticos
+      setDebugStep('3. Preparando dados...');
       const payload = {
         title: title.trim(),
         discipline: discipline || 'Geral',
@@ -230,55 +223,32 @@ export default function UploadMaterialPage() {
         status: isVisible ? 'active' : 'pending'
       };
 
-      const { data, error: insertError } = await supabase
+      setDebugStep('4. Enviando ao banco...');
+      // Insert SIMPLES sem .select() para evitar travamentos de RLS
+      const { error: insertError } = await supabase
         .from('materials')
-        .insert([payload])
-        .select();
+        .insert(payload);
 
       if (insertError) {
-        console.error('UploadMaterialPage: Insert error details', insertError);
-        
-        if (insertError.code === '42703' || insertError.message.includes('turma')) {
-          throw new Error('ERRO DE BANCO: A coluna "turma" não foi encontrada. Você precisa rodar o comando SQL no painel do Supabase.');
-        }
-        
-        if (insertError.code === '42501') {
-          throw new Error('ERRO DE PERMISSÃO: Você é administrador, mas seu perfil não tem permissão de escrita. Verifique se o seu perfil na tabela "profiles" está como "admin".');
-        }
-
-        throw new Error(insertError.message || 'Erro desconhecido ao inserir material');
+        console.error('Upload error:', insertError);
+        setDebugStep('Erro no passo 4: ' + insertError.message);
+        throw new Error(insertError.message);
       }
 
-      console.log('UploadMaterialPage: Step 3 - Success');
+      setDebugStep('5. Sucesso!');
       clearTimeout(safetyTimeout);
       setShowSuccess(true);
-      setToast({
-        message: 'Material publicado com sucesso!',
-        isVisible: true,
-        type: 'success'
-      });
       
       // Limpeza
-      setTitle('');
-      setFileUrl('');
-      setFileName('');
-      setDiscipline('');
-      setTurma('');
-      setCategory('');
-      setDescription('');
+      setTitle(''); setFileUrl(''); setFileName('');
+      setDiscipline(''); setTurma(''); setCategory(''); setDescription('');
 
-      setTimeout(() => {
-        router.push('/materials');
-      }, 2000);
+      setTimeout(() => router.push('/materials'), 2000);
 
     } catch (error: any) {
       clearTimeout(safetyTimeout);
-      console.error('UploadMaterialPage: Error caught', error);
-      setToast({
-        message: error.message || 'Ocorreu um erro inesperado',
-        isVisible: true,
-        type: 'error'
-      });
+      setToast({ message: error.message || 'Erro inesperado', isVisible: true, type: 'error' });
+      setDebugStep('Falha: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -554,8 +524,13 @@ export default function UploadMaterialPage() {
               </>
             )}
           </button>
-        </div>
-      </footer>
+            {debugStep && !showSuccess && (
+              <p className="text-center text-[10px] text-slate-500 font-mono mt-2 animate-pulse">
+                Status: {debugStep}
+              </p>
+            )}
+          </div>
+        </footer>
     </div>
   );
 }
