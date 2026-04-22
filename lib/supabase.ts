@@ -24,15 +24,19 @@ export const supabase = createClient(
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey && supabaseUrl !== 'https://placeholder.supabase.co');
 
 export const getSupabaseAdmin = () => {
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  // Tenta encontrar a chave em diferentes nomes possíveis
+  const serviceRoleKey = 
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 
+    process.env.SERVICE_ROLE_KEY || 
+    process.env.SUPABASE_SERVICE_KEY;
   
   if (!supabaseUrl) {
-    console.error('getSupabaseAdmin: Missing NEXT_PUBLIC_SUPABASE_URL');
+    console.error('getSupabaseAdmin: URL do Supabase não encontrada.');
     return null;
   }
   if (!serviceRoleKey) {
-    console.error('getSupabaseAdmin: Missing SUPABASE_SERVICE_ROLE_KEY');
+    console.error('getSupabaseAdmin: Nenhuma chave de serviço (Service Role) encontrada no ambiente.');
     return null;
   }
   return createClient(supabaseUrl, serviceRoleKey, {

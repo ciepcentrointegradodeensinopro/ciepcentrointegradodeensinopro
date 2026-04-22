@@ -10,7 +10,7 @@ export async function syncUsersAction() {
     if (!supabaseAdmin) {
       return { 
         success: false, 
-        error: 'A chave SUPABASE_SERVICE_ROLE_KEY ainda não foi configurada no menu Settings.' 
+        error: 'Configuração Incompleta: O sistema não encontrou a chave de serviço (Service Role) no menu Settings. Certifique-se de que adicionou uma variável com o nome exato: SUPABASE_SERVICE_ROLE_KEY' 
       };
     }
     
