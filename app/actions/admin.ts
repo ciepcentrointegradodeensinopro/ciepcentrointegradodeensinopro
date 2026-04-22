@@ -2,15 +2,29 @@
 
 import { getSupabaseAdmin } from '@/lib/supabase';
 
-export async function syncUsersAction() {
+export async function syncUsersAction(manualKey?: string) {
   console.log('AdminAction: Starting verbose user sync...');
   try {
-    const supabaseAdmin = getSupabaseAdmin();
+    // Usa a chave manual se fornecida, senão tenta as variáveis de ambiente
+    let supabaseAdmin = null;
+    
+    if (manualKey) {
+      console.log('AdminAction: Using manual key for sync');
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      if (supabaseUrl) {
+        const { createClient } = await import('@supabase/supabase-js');
+        supabaseAdmin = createClient(supabaseUrl, manualKey, {
+          auth: { autoRefreshToken: false, persistSession: false }
+        });
+      }
+    } else {
+      supabaseAdmin = getSupabaseAdmin();
+    }
     
     if (!supabaseAdmin) {
       return { 
         success: false, 
-        error: 'Configuração Incompleta: O sistema não encontrou a chave de serviço (Service Role) no menu Settings. Certifique-se de que adicionou uma variável com o nome exato: SUPABASE_SERVICE_ROLE_KEY' 
+        error: 'Configuração Incompleta: Para sincronizar, você precisa adicionar a chave SUPABASE_SERVICE_ROLE_KEY no menu Settings ou inseri-la manualmente no campo de resgate.' 
       };
     }
     

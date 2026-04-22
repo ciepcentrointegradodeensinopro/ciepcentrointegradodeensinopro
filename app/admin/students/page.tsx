@@ -44,17 +44,21 @@ function StudentsContent() {
     type: 'success'
   });
 
-  const [isSyncing, setIsSyncing] = React.useState(false);
+  const [manualKey, setManualKey] = React.useState('');
+  const [showManualKeyInput, setShowManualKeyInput] = React.useState(false);
 
   const handleSync = async () => {
     setIsSyncing(true);
     try {
-      const result = await syncUsersAction();
+      const result = await syncUsersAction(manualKey || undefined);
       if (result.success) {
         setToast({ message: `Sincronização concluída! ${result.count} usuários verificados.`, isVisible: true, type: 'success' });
+        setManualKey('');
+        setShowManualKeyInput(false);
         fetchUsers();
       } else {
         setToast({ message: `Erro na sincronização: ${result.error}`, isVisible: true, type: 'error' });
+        if (!manualKey) setShowManualKeyInput(true);
       }
     } catch (err: any) {
       setToast({ message: `Exceção na sincronização: ${err.message}`, isVisible: true, type: 'error' });
@@ -349,6 +353,35 @@ function StudentsContent() {
               <RefreshCw className={cn("w-4 h-4", isSyncing && "animate-spin")} />
               {isSyncing ? "Sincronizando..." : "Sincronizar Banco de Dados"}
             </button>
+
+            {showManualKeyInput && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-6 p-4 bg-slate-950 border border-slate-700 rounded-xl space-y-3 max-w-sm mx-auto"
+              >
+                <div className="flex items-center gap-2 text-amber-500 text-[10px] font-bold uppercase tracking-wider">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>Resgate de Emergência</span>
+                </div>
+                <p className="text-[10px] text-slate-500 text-left">
+                  Como as configurações automáticas falharam, cole sua chave <code className="text-amber-500">service_role</code> aqui para forçar o resgate dos alunos:
+                </p>
+                <input 
+                  type="password"
+                  value={manualKey}
+                  onChange={(e) => setManualKey(e.target.value)}
+                  placeholder="Cole aqui a chave eyJ..."
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-white focus:ring-1 focus:ring-green-500 outline-none"
+                />
+                <button 
+                  onClick={handleSync}
+                  className="w-full bg-green-600 text-white py-2 rounded-lg text-[10px] font-bold hover:bg-green-500 transition-colors"
+                >
+                  Tentar Sincronizar com esta Chave
+                </button>
+              </motion.div>
+            )}
           </div>
         )}
       </main>
