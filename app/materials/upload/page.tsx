@@ -51,6 +51,7 @@ export default function UploadMaterialPage() {
   });
   const [title, setTitle] = React.useState('');
   const [discipline, setDiscipline] = React.useState('');
+  const [turma, setTurma] = React.useState('');
   const [category, setCategory] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [fileUrl, setFileUrl] = React.useState('');
@@ -192,18 +193,31 @@ export default function UploadMaterialPage() {
     }
 
     setLoading(true);
+    
+    // Timer de segurança para evitar carregamento infinito
+    const safetyTimeout = setTimeout(() => {
+      if (loading) {
+        setLoading(false);
+        setToast({
+          message: 'O servidor está demorando muito para responder. Por favor, tente novamente ou verifique sua conexão.',
+          isVisible: true,
+          type: 'error'
+        });
+      }
+    }, 15000);
+
     try {
-      console.log('UploadMaterialPage: Publishing material...', { title, category, discipline });
+      console.log('UploadMaterialPage: Publishing material...', { title, category, discipline, turma });
       
       const { data: authData, error: authError } = await supabase.auth.getUser();
       if (authError || !authData?.user) {
         throw new Error(authError?.message || 'Usuário não autenticado.');
       }
-      const user = authData.user;
 
       const { error } = await supabase.from('materials').insert({
         title,
         discipline,
+        turma,
         category,
         description,
         file_url: fileUrl,
@@ -213,6 +227,12 @@ export default function UploadMaterialPage() {
 
       if (error) {
         console.error('UploadMaterialPage: Insert error', error);
+        
+        // Detecta especificamente erro de coluna ausente
+        if (error.message.includes('column') && error.message.includes('turma')) {
+          throw new Error('Erro de Banco de Dados: A coluna "turma" não existe. Por favor, execute o comando SQL no Supabase para continuar.');
+        }
+        
         throw error;
       }
 
@@ -229,6 +249,7 @@ export default function UploadMaterialPage() {
       setFileUrl('');
       setFileName('');
       setDiscipline('');
+      setTurma('');
       setCategory('');
       setDescription('');
 
@@ -243,6 +264,7 @@ export default function UploadMaterialPage() {
         type: 'error'
       });
     } finally {
+      clearTimeout(safetyTimeout);
       setLoading(false);
     }
   };
@@ -416,7 +438,7 @@ export default function UploadMaterialPage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-slate-300">Disciplina</label>
                 <select 
@@ -430,8 +452,26 @@ export default function UploadMaterialPage() {
                   ))}
                 </select>
               </div>
+
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-300">Categoria</label>
+                <label className="text-sm font-semibold text-slate-300">Turma (Dia)</label>
+                <select 
+                  value={turma}
+                  onChange={(e) => setTurma(e.target.value)}
+                  className="w-full appearance-none rounded-xl border border-slate-800 bg-slate-900 h-14 px-4 focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                >
+                  <option value="">Para todas as turmas</option>
+                  <option value="Segunda-feira">Segunda-feira</option>
+                  <option value="Terça-feira">Terça-feira</option>
+                  <option value="Quarta-feira">Quarta-feira</option>
+                  <option value="Quinta-feira">Quinta-feira</option>
+                  <option value="Sexta-feira">Sexta-feira</option>
+                  <option value="Sábado">Sábado</option>
+                </select>
+              </div>
+
+              <div className="sm:col-span-2 space-y-2">
+                <label className="text-sm font-semibold text-slate-300">Categoria / Tipo</label>
                 <select 
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
