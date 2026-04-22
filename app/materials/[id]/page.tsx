@@ -3,7 +3,7 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { FileText, Download, CheckCircle, MessageSquare, Clock, File, PlayCircle, Eye, ExternalLink, X } from 'lucide-react';
+import { FileText, Download, CheckCircle, MessageSquare, Clock, File, PlayCircle, Eye, ExternalLink, X, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -18,29 +18,72 @@ export default function MaterialDetailsPage() {
   const mounted = useMounted();
   const [material, setMaterial] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const [isViewerOpen, setIsViewerOpen] = React.useState(false);
 
-  React.useEffect(() => {
-    const fetchMaterial = async () => {
-      const { data, error } = await supabase
+  const fetchMaterial = React.useCallback(async () => {
+    if (!id) return;
+    
+    setLoading(true);
+    setError(null);
+
+    // Timeout de segurança
+    const timer = setTimeout(() => {
+      if (loading) {
+        setLoading(false);
+        setError("O servidor demorou muito para responder.");
+      }
+    }, 10000);
+
+    try {
+      const { data, error: supabaseError } = await supabase
         .from('materials')
         .select('*')
         .eq('id', id)
         .single();
 
-      if (!error) {
+      clearTimeout(timer);
+
+      if (supabaseError) {
+        setError(supabaseError.message);
+      } else {
         setMaterial(data);
       }
+    } catch (err: any) {
+      clearTimeout(timer);
+      setError(err.message || 'Erro inesperado');
+    } finally {
       setLoading(false);
-    };
+    }
+  }, [id, loading]);
 
-    if (id) fetchMaterial();
-  }, [id]);
+  React.useEffect(() => {
+    fetchMaterial();
+  }, [fetchMaterial]);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex flex-col">
+        <Header title="Erro" />
+        <main className="flex-1 flex flex-col items-center justify-center p-4 text-center">
+          <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
+          <h2 className="text-xl font-bold mb-2">Ops! Algo deu errado.</h2>
+          <p className="text-slate-400 max-w-xs">{error}</p>
+          <button 
+            onClick={() => fetchMaterial()}
+            className="mt-6 bg-green-600 text-white px-6 py-2 rounded-xl font-bold"
+          >
+            Tentar novamente
+          </button>
+        </main>
       </div>
     );
   }

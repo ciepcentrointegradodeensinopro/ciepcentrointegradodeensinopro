@@ -19,6 +19,7 @@ export default function MaterialsListPage() {
   const mounted = useMounted();
   const [materials, setMaterials] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const [selectedMaterial, setSelectedMaterial] = React.useState<any>(null);
   const [materialToDelete, setMaterialToDelete] = React.useState<any>(null);
   const [toast, setToast] = React.useState<{ message: string; isVisible: boolean; type: 'success' | 'error' }>({
@@ -29,16 +30,40 @@ export default function MaterialsListPage() {
 
   const fetchMaterials = React.useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('materials')
-      .select('*')
-      .order('created_at', { ascending: false });
+    setError(null);
 
-    if (!error) {
-      setMaterials(data || []);
+    // Timeout de segurança para não travar a tela
+    const timer = setTimeout(() => {
+      if (loading) {
+        setLoading(false);
+        setError("O servidor está demorando muito para responder. Tente atualizar a página (F5).");
+      }
+    }, 10000);
+
+    try {
+      console.log('MaterialsPage: Fetching materials...');
+      const { data, error: supabaseError } = await supabase
+        .from('materials')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      clearTimeout(timer);
+
+      if (supabaseError) {
+        console.error('MaterialsPage: Supabase error:', supabaseError);
+        setError(supabaseError.message);
+      } else {
+        console.log('MaterialsPage: Loaded', data?.length || 0, 'materials');
+        setMaterials(data || []);
+      }
+    } catch (err: any) {
+      clearTimeout(timer);
+      console.error('MaterialsPage: Exception:', err);
+      setError(err.message || 'Erro inesperado ao carregar materiais');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, []);
+  }, [loading]);
 
   React.useEffect(() => {
     fetchMaterials();
@@ -120,7 +145,23 @@ export default function MaterialsListPage() {
         <div className="max-w-md mx-auto space-y-6">
           <section>
             <h2 className="text-lg font-bold mb-4 px-2">Materiais Disponíveis</h2>
-            {loading ? (
+            {error ? (
+              <div className="bg-red-500/10 border border-red-500/50 p-6 rounded-2xl text-center space-y-4">
+                <div className="size-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto">
+                  <AlertCircle className="w-6 h-6 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="text-red-500 font-bold uppercase tracking-widest text-[10px]">Erro no Carregamento</h3>
+                  <p className="text-slate-300 text-sm mt-1">{error}</p>
+                </div>
+                <button 
+                  onClick={() => fetchMaterials()}
+                  className="w-full py-3 bg-red-500 text-white rounded-xl font-bold text-sm"
+                >
+                  Tentar novamente
+                </button>
+              </div>
+            ) : loading ? (
               <div className="flex justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
               </div>
