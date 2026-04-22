@@ -46,6 +46,7 @@ function StudentsContent() {
 
   const [manualKey, setManualKey] = React.useState('');
   const [showManualKeyInput, setShowManualKeyInput] = React.useState(false);
+  const [isSyncing, setIsSyncing] = React.useState(false);
 
   const handleSync = async () => {
     setIsSyncing(true);
