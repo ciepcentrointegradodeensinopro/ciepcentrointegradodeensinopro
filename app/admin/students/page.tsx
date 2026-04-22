@@ -75,6 +75,15 @@ function StudentsContent() {
   const fetchUsers = React.useCallback(async () => {
     setLoading(true);
     setError(null);
+    
+    // Timer de segurança para não deixar a tela carregando para sempre
+    const timer = setTimeout(() => {
+      if (loading) {
+        setLoading(false);
+        setError("O carregamento está demorando mais que o esperado. Por favor, atualize a página (F5).");
+      }
+    }, 8000);
+
     try {
       console.log('StudentsPage: Fetching users...');
       const { data, error: supabaseError } = await supabase
@@ -82,25 +91,28 @@ function StudentsContent() {
         .select('*')
         .order('full_name', { ascending: true });
 
+      clearTimeout(timer);
+
       if (supabaseError) {
         console.error('StudentsPage: Error fetching users:', supabaseError);
-        setError(supabaseError.message);
-        setToast({ 
-          message: `Erro ao carregar usuários: ${supabaseError.message}`, 
-          isVisible: true, 
-          type: 'error' 
-        });
+        // Se o erro for de cache de esquema, avisa o usuário para atualizar
+        if (supabaseError.message.includes('column') || supabaseError.message.includes('schema')) {
+          setError("O banco de dados foi atualizado. Por favor, atualize a página (F5) para sincronizar o navegador.");
+        } else {
+          setError(supabaseError.message);
+        }
       } else {
         console.log('StudentsPage: Users fetched successfully', data?.length || 0, 'users found');
         setUsers(data || []);
       }
     } catch (err: any) {
+      clearTimeout(timer);
       console.error('StudentsPage: Exception fetching users:', err);
-      setError(err.message || 'Erro desconhecido');
+      setError(err.message || 'Erro de conexão inesperado');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loading]);
 
   React.useEffect(() => {
     fetchUsers();
