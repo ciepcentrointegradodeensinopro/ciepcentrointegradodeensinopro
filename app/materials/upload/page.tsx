@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { Toast } from '@/components/Toast';
+import { uploadMaterialAction } from '@/app/actions/materials';
 
 // Google API Config
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
@@ -223,16 +224,14 @@ export default function UploadMaterialPage() {
         status: isVisible ? 'active' : 'pending'
       };
 
-      setDebugStep('4. Enviando ao banco...');
-      // Insert SIMPLES sem .select() para evitar travamentos de RLS
-      const { error: insertError } = await supabase
-        .from('materials')
-        .insert(payload);
+      setDebugStep('4. Enviando ao banco (via servidor)...');
+      
+      const result = await uploadMaterialAction(payload);
 
-      if (insertError) {
-        console.error('Upload error:', insertError);
-        setDebugStep('Erro no passo 4: ' + insertError.message);
-        throw new Error(insertError.message);
+      if (!result.success) {
+        console.error('Upload error:', result.error);
+        setDebugStep('Erro no passo 4: ' + result.error);
+        throw new Error(result.error);
       }
 
       setDebugStep('5. Sucesso!');
