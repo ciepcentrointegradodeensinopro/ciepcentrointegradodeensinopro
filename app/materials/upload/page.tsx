@@ -118,15 +118,19 @@ export default function UploadMaterialPage() {
     setUploadProgress(10);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
+      const fileNameUnique = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileNameUnique}`;
 
       setUploadProgress(30);
-      const { data, error } = await supabase.storage
+      // Upload DIRETO do navegador para o Supabase Storage
+      const { data, error: uploadError } = await supabase.storage
         .from('materials')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (error) throw error;
+      if (uploadError) throw uploadError;
 
       setUploadProgress(70);
       const { data: { publicUrl } } = supabase.storage
@@ -186,38 +190,15 @@ export default function UploadMaterialPage() {
   const [debugStep, setDebugStep] = React.useState('');
 
   const handlePublish = async () => {
-    // Verificação de segurança: O Supabase está configurado?
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
-      setToast({ 
-        message: 'ERRO: A URL do Supabase não foi configurada no AI Studio (Settings).', 
-        isVisible: true, 
-        type: 'error' 
-      });
-      return;
-    }
-
     if (!title || !fileUrl) {
       setToast({ message: 'Preencha o título e selecione um arquivo.', isVisible: true, type: 'error' });
       return;
     }
 
     setLoading(true);
-    setDebugStep('1. Preparando dados...');
+    setDebugStep('Salvando material...');
     
-    const safetyTimeout = setTimeout(() => {
-      setLoading(false);
-      setDebugStep('Erro: Tempo esgotado (60s) no passo ' + (debugStep || 'inicial'));
-      setToast({
-        message: 'O servidor não respondeu. Dica: Verifique se o seu Supabase não está PAUSADO no painel deles.',
-        isVisible: true,
-        type: 'error'
-      });
-    }, 60000);
-
     try {
-      setDebugStep('2. Preparando envio direto...');
-      
       const payload = {
         title: title.trim(),
         discipline: discipline || 'Geral',
@@ -229,25 +210,13 @@ export default function UploadMaterialPage() {
         status: isVisible ? 'active' : 'pending'
       };
 
-      setDebugStep('3. Gravando no banco de dados...');
-      
-      // PLANO B: Inserção direta pelo cliente
-      const { data, error: insertError } = await supabase
-        .from('materials')
-        .insert(payload)
-        .select();
+      // Chamada para o servidor apenas para salvar o metadado (rápido)
+      const result = await uploadMaterialAction(payload);
 
-      if (insertError) {
-        console.error('Erro detalhado:', insertError);
-        
-        // Se falhar o direto, tentamos o servidor como última esperança
-        setDebugStep('4. Tentando via servidor (Fallback)...');
-        const result = await uploadMaterialAction(payload);
-        if (!result.success) throw new Error(result.error);
+      if (!result.success) {
+        throw new Error(result.error);
       }
 
-      setDebugStep('5. Sucesso!');
-      clearTimeout(safetyTimeout);
       setShowSuccess(true);
       
       // Limpeza
@@ -257,11 +226,10 @@ export default function UploadMaterialPage() {
       setTimeout(() => router.push('/materials'), 2000);
 
     } catch (error: any) {
-      clearTimeout(safetyTimeout);
       setToast({ message: error.message || 'Erro inesperado', isVisible: true, type: 'error' });
-      setDebugStep('Falha: ' + error.message);
     } finally {
       setLoading(false);
+      setDebugStep('');
     }
   };
 

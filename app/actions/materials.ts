@@ -1,25 +1,15 @@
 'use server';
 
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 export async function uploadMaterialAction(payload: any) {
   console.log('uploadMaterialAction: Starting...', { title: payload.title });
 
-  if (!supabaseUrl || !serviceRoleKey) {
-    const missing = !supabaseUrl ? 'URL' : 'KEY';
-    console.error(`uploadMaterialAction: Configuration missing (${missing})`);
-    return { success: false, error: `Configuração do servidor incompleta (${missing} faltando).` };
-  }
+  const supabase = getSupabaseAdmin();
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
+  if (!supabase) {
+    return { success: false, error: 'Configuração do servidor incompleta (service_role faltando).' };
+  }
 
   try {
     console.log('uploadMaterialAction: Attempting insert...');
