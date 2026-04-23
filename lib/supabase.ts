@@ -6,22 +6,26 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 // Função auxiliar para validar se a URL é válida para o Supabase
 const isValidUrl = (url: string | undefined): url is string => {
   if (!url) return false;
-  try {
-    return url.startsWith('http://') || url.startsWith('https://');
-  } catch {
-    return false;
-  }
+  const trimmed = url.trim();
+  return trimmed.startsWith('http://') || trimmed.startsWith('https://');
 };
 
-if (!isValidUrl(supabaseUrl) || !supabaseAnonKey) {
-  console.warn(
-    'Supabase configuration is missing or invalid. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your environment variables.'
-  );
+const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseUrl = isValidUrl(rawUrl) ? rawUrl.trim() : 'https://placeholder.supabase.co';
+const supabaseAnonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder').trim();
+
+// Log seguro para diagnóstico (apenas no console do desenvolvedor)
+if (typeof window !== 'undefined') {
+  const maskedUrl = supabaseUrl.replace(/(https?:\/\/)(.*)(\.supabase\.co)/, '$1***$3');
+  console.log('Supabase Connection:', { 
+    url: maskedUrl, 
+    configured: isSupabaseConfigured = isValidUrl(rawUrl) && supabaseAnonKey !== 'placeholder'
+  });
 }
 
 export const supabase = createClient(
-  isValidUrl(supabaseUrl) ? supabaseUrl : 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder',
+  supabaseUrl,
+  supabaseAnonKey,
   {
     auth: {
       autoRefreshToken: typeof window !== 'undefined',
@@ -31,25 +35,25 @@ export const supabase = createClient(
   }
 );
 
-export const isSupabaseConfigured = isValidUrl(supabaseUrl) && !!supabaseAnonKey && supabaseUrl !== 'https://placeholder.supabase.co';
+export let isSupabaseConfigured = isValidUrl(rawUrl) && supabaseAnonKey !== 'placeholder' && supabaseUrl !== 'https://placeholder.supabase.co';
 
 export const getSupabaseAdmin = () => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  // Tenta encontrar a chave em diferentes nomes possíveis
-  const serviceRoleKey = 
+  const adminUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = (
     process.env.SUPABASE_SERVICE_ROLE_KEY || 
     process.env.SERVICE_ROLE_KEY || 
-    process.env.SUPABASE_SERVICE_KEY;
+    process.env.SUPABASE_SERVICE_KEY
+  )?.trim();
   
-  if (!isValidUrl(supabaseUrl)) {
-    console.error('getSupabaseAdmin: URL do Supabase não encontrada ou inválida.');
+  if (!isValidUrl(adminUrl)) {
+    console.error('getSupabaseAdmin: URL inválida');
     return null;
   }
   if (!serviceRoleKey) {
-    console.error('getSupabaseAdmin: Nenhuma chave de serviço (Service Role) encontrada no ambiente.');
+    console.error('getSupabaseAdmin: Chave service_role ausente');
     return null;
   }
-  return createClient(supabaseUrl, serviceRoleKey, {
+  return createClient(adminUrl.trim(), serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false

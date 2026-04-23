@@ -196,13 +196,13 @@ export default function UploadMaterialPage() {
     
     const safetyTimeout = setTimeout(() => {
       setLoading(false);
-      setDebugStep('Erro: Tempo esgotado na etapa ' + debugStep);
+      setDebugStep('Erro: Tempo esgotado (60s) no passo ' + (debugStep || 'inicial'));
       setToast({
-        message: 'O servidor não respondeu a tempo. Se o erro persistir, verifique sua conexão ou se as chaves service_role estão corretas.',
+        message: 'O servidor não respondeu. Dica: Verifique se o seu Supabase não está PAUSADO no painel deles.',
         isVisible: true,
         type: 'error'
       });
-    }, 30000);
+    }, 60000);
 
     try {
       setDebugStep('2. Verificando sessão...');
