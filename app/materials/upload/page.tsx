@@ -186,13 +186,24 @@ export default function UploadMaterialPage() {
   const [debugStep, setDebugStep] = React.useState('');
 
   const handlePublish = async () => {
+    // Verificação de segurança: O Supabase está configurado?
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+      setToast({ 
+        message: 'ERRO: A URL do Supabase não foi configurada no AI Studio (Settings).', 
+        isVisible: true, 
+        type: 'error' 
+      });
+      return;
+    }
+
     if (!title || !fileUrl) {
       setToast({ message: 'Preencha o título e selecione um arquivo.', isVisible: true, type: 'error' });
       return;
     }
 
     setLoading(true);
-    setDebugStep('1. Iniciando...');
+    setDebugStep('1. Preparando dados...');
     
     const safetyTimeout = setTimeout(() => {
       setLoading(false);
@@ -205,14 +216,9 @@ export default function UploadMaterialPage() {
     }, 60000);
 
     try {
-      setDebugStep('2. Verificando sessão...');
-      const { data: { session } } = await supabase.auth.getSession();
+      // Pulamos o 'getSession' do frontend que pode travar em redes instáveis
+      // e vamos direto para a Server Action.
       
-      if (!session) {
-        throw new Error('Sessão não encontrada. Por favor, faça login novamente.');
-      }
-
-      setDebugStep('3. Preparando dados...');
       const payload = {
         title: title.trim(),
         discipline: discipline || 'Geral',
@@ -224,17 +230,16 @@ export default function UploadMaterialPage() {
         status: isVisible ? 'active' : 'pending'
       };
 
-      setDebugStep('4. Enviando ao banco (via servidor)...');
-      
+      setDebugStep('2. Enviando ao servidor...');
       const result = await uploadMaterialAction(payload);
 
       if (!result.success) {
         console.error('Upload error:', result.error);
-        setDebugStep('Erro no passo 4: ' + result.error);
+        setDebugStep('Erro no servidor: ' + result.error);
         throw new Error(result.error);
       }
 
-      setDebugStep('5. Sucesso!');
+      setDebugStep('3. Sucesso!');
       clearTimeout(safetyTimeout);
       setShowSuccess(true);
       
