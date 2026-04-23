@@ -198,11 +198,11 @@ export default function UploadMaterialPage() {
       setLoading(false);
       setDebugStep('Erro: Tempo esgotado na etapa ' + debugStep);
       setToast({
-        message: 'O servidor não respondeu a tempo. Verifique sua chave service_role e o banco.',
+        message: 'O servidor não respondeu a tempo. Se o erro persistir, verifique sua conexão ou se as chaves service_role estão corretas.',
         isVisible: true,
         type: 'error'
       });
-    }, 15000);
+    }, 30000);
 
     try {
       setDebugStep('2. Verificando sessão...');
