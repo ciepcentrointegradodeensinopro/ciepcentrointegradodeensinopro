@@ -216,8 +216,7 @@ export default function UploadMaterialPage() {
     }, 60000);
 
     try {
-      // Pulamos o 'getSession' do frontend que pode travar em redes instáveis
-      // e vamos direto para a Server Action.
+      setDebugStep('2. Preparando envio direto...');
       
       const payload = {
         title: title.trim(),
@@ -230,16 +229,24 @@ export default function UploadMaterialPage() {
         status: isVisible ? 'active' : 'pending'
       };
 
-      setDebugStep('2. Enviando ao servidor...');
-      const result = await uploadMaterialAction(payload);
+      setDebugStep('3. Gravando no banco de dados...');
+      
+      // PLANO B: Inserção direta pelo cliente
+      const { data, error: insertError } = await supabase
+        .from('materials')
+        .insert(payload)
+        .select();
 
-      if (!result.success) {
-        console.error('Upload error:', result.error);
-        setDebugStep('Erro no servidor: ' + result.error);
-        throw new Error(result.error);
+      if (insertError) {
+        console.error('Erro detalhado:', insertError);
+        
+        // Se falhar o direto, tentamos o servidor como última esperança
+        setDebugStep('4. Tentando via servidor (Fallback)...');
+        const result = await uploadMaterialAction(payload);
+        if (!result.success) throw new Error(result.error);
       }
 
-      setDebugStep('3. Sucesso!');
+      setDebugStep('5. Sucesso!');
       clearTimeout(safetyTimeout);
       setShowSuccess(true);
       
