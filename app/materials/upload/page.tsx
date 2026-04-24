@@ -124,17 +124,17 @@ export default function UploadMaterialPage() {
       setUploadProgress(30);
       // Upload DIRETO do navegador para o Supabase Storage
       const { data, error: uploadError } = await supabase.storage
-        .from('materials')
+        .from('materiais')
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: false
+          upsert: true
         });
 
       if (uploadError) throw uploadError;
 
       setUploadProgress(70);
       const { data: { publicUrl } } = supabase.storage
-        .from('materials')
+        .from('materiais')
         .getPublicUrl(filePath);
 
       setFileUrl(publicUrl);
