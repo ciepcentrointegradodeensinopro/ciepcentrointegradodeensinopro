@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 
 export async function uploadMaterialAction(payload: any) {
+  console.log('SERVICE_ROLE presente?', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
   const supabase = getSupabaseAdmin();
 
   if (!supabase) {
