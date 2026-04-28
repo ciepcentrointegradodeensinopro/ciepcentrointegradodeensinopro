@@ -35,21 +35,23 @@ export const supabase = createClient(
 );
 
 export const getSupabaseAdmin = () => {
-  const adminUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const adminUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
   const serviceRoleKey = (
     process.env.SUPABASE_SERVICE_ROLE_KEY || 
     process.env.SERVICE_ROLE_KEY || 
     process.env.SUPABASE_SERVICE_KEY
   )?.trim();
   
-  if (!isValidUrl(adminUrl)) {
-    console.error('getSupabaseAdmin: URL inválida');
+  if (!isValidUrl(adminUrl) || adminUrl === 'https://placeholder.supabase.co') {
+    console.error('getSupabaseAdmin: URL do Supabase não configurada corretamente no servidor.');
     return null;
   }
+  
   if (!serviceRoleKey) {
-    console.error('getSupabaseAdmin: Chave service_role ausente');
+    console.error('getSupabaseAdmin: SUPABASE_SERVICE_ROLE_KEY ausente nas variáveis de ambiente.');
     return null;
   }
+
   return createClient(adminUrl.trim(), serviceRoleKey, {
     auth: {
       autoRefreshToken: false,

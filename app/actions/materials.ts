@@ -1,6 +1,7 @@
 'use server';
 
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 export async function uploadMaterialAction(payload: any) {
   console.log('uploadMaterialAction: Starting...', { title: payload.title });
