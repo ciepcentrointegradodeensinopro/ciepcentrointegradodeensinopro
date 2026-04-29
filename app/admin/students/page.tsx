@@ -76,9 +76,10 @@ function StudentsContent() {
     setLoading(true);
     setError(null);
     
+    let isFinished = false;
     // Timer de segurança para não deixar a tela carregando para sempre
     const timer = setTimeout(() => {
-      if (loading) {
+      if (!isFinished) {
         setLoading(false);
         setError("O carregamento está demorando mais que o esperado. Por favor, atualize a página (F5).");
       }
@@ -91,6 +92,7 @@ function StudentsContent() {
         .select('*')
         .order('full_name', { ascending: true });
 
+      isFinished = true;
       clearTimeout(timer);
 
       if (supabaseError) {
@@ -106,13 +108,14 @@ function StudentsContent() {
         setUsers(data || []);
       }
     } catch (err: any) {
+      isFinished = true;
       clearTimeout(timer);
       console.error('StudentsPage: Exception fetching users:', err);
       setError(err.message || 'Erro de conexão inesperado');
     } finally {
       setLoading(false);
     }
-  }, [loading]);
+  }, []);
 
   React.useEffect(() => {
     fetchUsers();
