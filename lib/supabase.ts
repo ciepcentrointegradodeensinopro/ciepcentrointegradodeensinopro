@@ -4,9 +4,13 @@ import { createClient } from '@supabase/supabase-js';
 const extractSupabaseUrl = (urlOrJwt: string | undefined, anonKey: string | undefined): string => {
   const fallback = 'https://placeholder.supabase.co';
   
-  // Se for uma URL válida, retorne ela
+  // Se for uma URL válida, retorne ela (removendo barra no final se houver)
   if (urlOrJwt && (urlOrJwt.trim().startsWith('http://') || urlOrJwt.trim().startsWith('https://'))) {
-    return urlOrJwt.trim();
+    let url = urlOrJwt.trim();
+    if (url.endsWith('/')) {
+      url = url.slice(0, -1);
+    }
+    return url;
   }
 
   // Se não for URL, vamos tentar extrair o "ref" (ID do projeto) de um possível token JWT (do urlOrJwt ou do anonKey)
@@ -32,17 +36,48 @@ const extractSupabaseUrl = (urlOrJwt: string | undefined, anonKey: string | unde
 
 const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const rawAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+// Log para debug (apenas em desenvolvimento se necessário, mas aqui vamos deixar para ajudar o usuário)
+if (typeof window !== 'undefined') {
+  console.log('Supabase Env Check:', {
+    hasUrl: !!rawUrl,
+    urlType: typeof rawUrl,
+    hasAnon: !!rawAnonKey,
+    anonType: typeof rawAnonKey
+  });
+}
+
 const supabaseAnonKey = (rawAnonKey || 'placeholder').trim();
 const supabaseUrl = extractSupabaseUrl(rawUrl, supabaseAnonKey);
 
 export let isSupabaseConfigured = supabaseUrl !== 'https://placeholder.supabase.co' && supabaseAnonKey !== 'placeholder';
 
-// Log seguro para diagnóstico (apenas no console do desenvolvedor)
+export const checkSupabaseConnection = async () => {
+  try {
+    const res = await fetch(`${supabaseUrl}/auth/v1/health`, {
+      headers: { 'apiKey': supabaseAnonKey }
+    });
+    return res.ok;
+  } catch (e) {
+    console.error('Supabase Health Check Failed:', e);
+    return false;
+  }
+};
+
+// Log seguro para diagnóstico
 if (typeof window !== 'undefined') {
-  const maskedUrl = supabaseUrl.replace(/(https?:\/\/)(.*)(\.supabase\.co)/, '$1***$3');
-  console.log('Supabase Connection:', { 
+  let maskedUrl = supabaseUrl;
+  try {
+    const urlObj = new URL(supabaseUrl);
+    maskedUrl = `${urlObj.protocol}//***${urlObj.hostname.slice(-12)}`;
+  } catch (e) {
+    maskedUrl = 'Invalid URL';
+  }
+  
+  console.log('Supabase Connection Status:', { 
     url: maskedUrl, 
-    configured: isSupabaseConfigured
+    configured: isSupabaseConfigured,
+    timestamp: new Date().toISOString()
   });
 }
 

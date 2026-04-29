@@ -87,7 +87,17 @@ export default function LoginPage() {
       // After login, AuthProvider will catch the session change and handle redirects
       // We don't push to dashboard here to avoid bypassing the status check
     } catch (err: any) {
-      setError(err.message || 'E-mail ou senha inválidos');
+      console.error('LoginPage: Catch error', err);
+      if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+        setError(
+          <div className="flex flex-col gap-2">
+            <span className="font-bold">Erro de Conexão (Network Error)</span>
+            <span className="text-xs">Não foi possível conectar ao servidor do Supabase. Verifique se a URL e a Chave Anon do Supabase estão configuradas corretamente nas configurações do projeto.</span>
+          </div>
+        );
+      } else {
+        setError(err.message || 'E-mail ou senha inválidos');
+      }
     } finally {
       setLoading(false);
     }
@@ -149,8 +159,25 @@ export default function LoginPage() {
         )}
 
         {error && (
-          <div className="mx-6 mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-red-500 text-sm font-medium">
-            {error}
+          <div className="mx-6 mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-red-500 text-sm font-medium flex flex-col gap-3">
+            <div>{error}</div>
+            <button 
+              type="button"
+              onClick={async () => {
+                const { checkSupabaseConnection } = await import('@/lib/supabase');
+                setLoading(true);
+                const isOk = await checkSupabaseConnection();
+                setLoading(false);
+                if (isOk) {
+                  setError(<span className="text-green-500 font-bold uppercase tracking-widest text-[10px]">Conexão estabelecida com sucesso! Tente logar novamente.</span>);
+                } else {
+                  setError(<span className="text-red-500 font-bold uppercase tracking-widest text-[10px]">Falha na conexão: Verifique sua URL e Chave Anon nas configurações.</span>);
+                }
+              }}
+              className="text-xs bg-red-500/20 py-2 rounded-lg hover:bg-red-500/30 transition-colors uppercase font-bold tracking-widest"
+            >
+              Testar Conexão com Supabase
+            </button>
           </div>
         )}
 
