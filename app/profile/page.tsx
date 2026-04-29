@@ -15,17 +15,12 @@ import { Toast } from '@/components/Toast';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, profile, loading, isAdmin } = useAuth();
+  const { user, profile, loading, isAdmin, signOut } = useAuth();
   const mounted = useMounted();
   const [showSuccess, setShowSuccess] = React.useState(false);
   const [successMessage, setSuccessMessage] = React.useState('');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = '/';
-  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -173,7 +168,7 @@ export default function ProfilePage() {
                 </Link>
               ))}
               <button 
-                onClick={handleLogout}
+                onClick={signOut}
                 className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-red-500/10 transition-colors group"
               >
                 <div className="flex items-center gap-4">

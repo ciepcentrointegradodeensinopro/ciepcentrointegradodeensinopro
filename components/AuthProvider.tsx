@@ -349,13 +349,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const isAdmin = profile?.role === 'admin' || (user?.email && adminEmails.some(e => e.toLowerCase() === user.email?.toLowerCase()));
 
   const signOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      setUser(null);
-      setProfile(null);
-      router.push('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
+    if (window.confirm("Você deseja realmente sair da plataforma?")) {
+      try {
+        await supabase.auth.signOut();
+        setUser(null);
+        setProfile(null);
+        router.push('/');
+      } catch (error) {
+        console.error('Error signing out:', error);
+      }
     }
   };
 

@@ -17,7 +17,7 @@ import { ptBR } from 'date-fns/locale';
 import Image from 'next/image';
 
 export default function Dashboard() {
-  const { user, profile, loading: authLoading, isAdmin } = useAuth();
+  const { user, profile, loading: authLoading, isAdmin, signOut } = useAuth();
   const mounted = useMounted();
   const [loading, setLoading] = React.useState(true);
   const [stats, setStats] = React.useState<any[]>([]);
@@ -128,11 +128,6 @@ export default function Dashboard() {
     }
   }, [authLoading, profile, isAdmin, fetchData]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = '/';
-  };
-
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6">
@@ -179,7 +174,7 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-4">
           <button 
-            onClick={handleLogout}
+            onClick={signOut}
             className="p-2 text-red-500 hover:bg-red-500/10 rounded-full transition-colors"
             title="Sair"
           >
