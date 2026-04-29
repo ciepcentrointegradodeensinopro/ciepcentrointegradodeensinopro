@@ -102,20 +102,22 @@ export default function ProfilePage() {
           {/* Profile Header */}
           <div className="flex flex-col items-center p-6 gap-6">
             <div className="relative">
-              <div className="size-32 rounded-full border-4 border-green-500/20 overflow-hidden relative bg-slate-800">
+              <div className="size-32 rounded-full border-4 border-green-500/20 overflow-hidden relative bg-slate-800 flex items-center justify-center text-slate-400">
                 {uploading ? (
                   <div className="absolute inset-0 flex items-center justify-center bg-slate-900/50 z-10">
                     <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-green-500"></div>
                   </div>
                 ) : null}
-                {mounted && (
+                {mounted && profile?.avatar_url ? (
                   <Image 
-                    src={profile?.avatar_url || `https://picsum.photos/seed/${profile?.id}/200/200`} 
+                    src={profile.avatar_url} 
                     alt={profile?.full_name || "User Profile"} 
                     fill
                     className="object-cover" 
                     referrerPolicy="no-referrer"
                   />
+                ) : (
+                  <User className="w-12 h-12" />
                 )}
               </div>
               <input 

@@ -4,7 +4,7 @@ import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { syncUsersAction } from '@/app/actions/admin';
-import { ArrowLeft, Search, Plus, Eye, Edit2, Trash2, Shield, UserCheck, RefreshCw, AlertCircle, Users } from 'lucide-react';
+import { ArrowLeft, Search, Plus, Eye, Edit2, Trash2, Shield, UserCheck, RefreshCw, AlertCircle, Users, User } from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -285,15 +285,17 @@ function StudentsContent() {
             className="bg-slate-900/50 p-4 rounded-xl border border-slate-800 shadow-sm"
           >
             <div className="flex items-center gap-4">
-              <div className="relative shrink-0 w-14 h-14">
-                {mounted && (
+              <div className="relative shrink-0 w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-slate-400">
+                {mounted && user.avatar_url ? (
                   <Image 
-                    src={user.avatar_url || `https://picsum.photos/seed/${user.id}/100/100`} 
+                    src={user.avatar_url} 
                     alt={user.full_name || "User Avatar"} 
                     fill
                     className="rounded-full bg-slate-800 object-cover" 
                     referrerPolicy="no-referrer"
                   />
+                ) : (
+                  <User className="w-6 h-6" />
                 )}
                 <span className={cn(
                   "absolute bottom-0 right-0 w-3.5 h-3.5 border-2 border-slate-900 rounded-full",

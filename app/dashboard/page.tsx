@@ -184,15 +184,17 @@ export default function Dashboard() {
             <Bell className="w-6 h-6" />
             <span className="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-slate-950"></span>
           </button>
-          <div className="size-10 rounded-full overflow-hidden border-2 border-green-500/20 relative">
-            {mounted && (
+          <div className="size-10 rounded-full overflow-hidden border-2 border-green-500/20 relative bg-slate-800 flex items-center justify-center text-slate-400">
+            {mounted && profile?.avatar_url ? (
               <Image 
-                src={profile?.avatar_url || `https://picsum.photos/seed/${profile?.id}/100/100`} 
+                src={profile.avatar_url} 
                 alt="Profile" 
                 fill
                 className="object-cover" 
                 referrerPolicy="no-referrer"
               />
+            ) : (
+              <User className="w-6 h-6" />
             )}
           </div>
         </div>

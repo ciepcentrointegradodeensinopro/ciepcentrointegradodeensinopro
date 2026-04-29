@@ -3,7 +3,7 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { School, BadgeCheck, Share2, Verified, RefreshCw, AlertTriangle } from 'lucide-react';
+import { School, BadgeCheck, Share2, Verified, RefreshCw, AlertTriangle, User } from 'lucide-react';
 import { motion } from 'motion/react';
 import { supabase } from '@/lib/supabase';
 
@@ -125,15 +125,17 @@ export default function IDCardPage() {
 
             {/* Student Info */}
             <div className="flex gap-4 mb-6">
-              <div className="w-28 h-36 bg-slate-800 rounded-lg overflow-hidden border-2 border-green-500/20 flex-shrink-0 relative">
-                {mounted && (
+              <div className="w-28 h-36 bg-slate-800 rounded-lg overflow-hidden border-2 border-green-500/20 flex-shrink-0 relative flex items-center justify-center text-slate-400">
+                {mounted && profile?.avatar_url ? (
                   <Image 
-                    src={profile?.avatar_url || `https://picsum.photos/seed/${profile?.id}/200/300`} 
+                    src={profile.avatar_url} 
                     alt={profile?.full_name || "Student ID Photo"} 
                     fill
                     className="object-cover" 
                     referrerPolicy="no-referrer"
                   />
+                ) : (
+                  <User className="w-12 h-12 text-slate-400" />
                 )}
               </div>
               <div className="flex flex-col justify-center">

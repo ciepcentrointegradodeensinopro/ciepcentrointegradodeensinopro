@@ -222,14 +222,16 @@ export default function AddStudentPage() {
                 className="relative group cursor-pointer"
               >
                 <div className="size-32 rounded-full bg-slate-900 border-4 border-green-500/20 flex items-center justify-center overflow-hidden relative">
-                  {mounted && (
+                  {mounted && avatarUrl ? (
                     <Image 
-                      src={avatarUrl || "https://picsum.photos/seed/upload/200/200"} 
+                      src={avatarUrl}
                       alt="Profile" 
                       fill
-                      className={cn("object-cover transition-opacity", !avatarUrl && "opacity-50 group-hover:opacity-30")}
+                      className="object-cover transition-opacity"
                       referrerPolicy="no-referrer"
                     />
+                  ) : (
+                    <User className={cn("w-12 h-12 text-slate-500 transition-opacity", !avatarUrl && "opacity-50 group-hover:opacity-30")} />
                   )}
                   {!avatarUrl && (
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -431,15 +433,17 @@ export default function AddStudentPage() {
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
               <div className="p-6 border-b border-slate-800 flex items-center gap-4">
-                <div className="size-20 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden relative">
-                  {mounted && (
+                <div className="size-20 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden relative text-slate-400">
+                  {mounted && avatarUrl ? (
                     <Image 
-                      src={avatarUrl || "https://picsum.photos/seed/upload/200/200"} 
+                      src={avatarUrl}
                       alt="Profile" 
                       fill
                       className="object-cover"
                       referrerPolicy="no-referrer"
                     />
+                  ) : (
+                    <User className="w-8 h-8" />
                   )}
                 </div>
                 <div>

@@ -3,7 +3,7 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
-import { FileText, Download, CheckCircle, MessageSquare, Clock, File, PlayCircle, Eye, ExternalLink, X, AlertCircle } from 'lucide-react';
+import { FileText, Download, CheckCircle, MessageSquare, User, Clock, File, PlayCircle, Eye, ExternalLink, X, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -153,14 +153,8 @@ export default function MaterialDetailsPage() {
 
           {/* Author / Info */}
           <div className="flex items-center gap-3">
-            <div className="size-10 rounded-full overflow-hidden border-2 border-green-500/20 relative">
-              <Image 
-                src="https://picsum.photos/seed/prof/100/100" 
-                alt="Professor" 
-                fill
-                className="object-cover" 
-                referrerPolicy="no-referrer"
-              />
+            <div className="size-10 rounded-full overflow-hidden border-2 border-green-500/20 relative bg-slate-800 flex items-center justify-center text-slate-400">
+              <User className="w-5 h-5" />
             </div>
             <div>
               <p className="text-sm font-bold">Prof. Roberto Silva</p>
