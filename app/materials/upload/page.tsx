@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { Toast } from '@/components/Toast';
-import { uploadMaterialAction } from '@/app/actions/materials';
+import { uploadMaterialAction, uploadMaterialFileAction } from '@/app/actions/materials';
 
 // Google API Config
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
@@ -122,22 +122,20 @@ export default function UploadMaterialPage() {
       const filePath = `${fileNameUnique}`;
 
       setUploadProgress(30);
-      // Upload DIRETO do navegador para o Supabase Storage
-      const { data, error: uploadError } = await supabase.storage
-        .from('materiais')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
-
-      if (uploadError) throw uploadError;
+      
+      // Upload via Server Action (Bypassa problemas com RLS no frontend)
+      const formUploadData = new FormData();
+      formUploadData.append('file', file);
+      
+      const uploadResult = await uploadMaterialFileAction(formUploadData);
+      
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.error || 'Erro desconhecido ao carregar o arquivo');
+      }
 
       setUploadProgress(70);
-      const { data: { publicUrl } } = supabase.storage
-        .from('materiais')
-        .getPublicUrl(filePath);
-
-      setFileUrl(publicUrl);
+      
+      setFileUrl(uploadResult.url as string);
       setFileName(file.name);
       if (!title) setTitle(file.name.split('.')[0]);
       
