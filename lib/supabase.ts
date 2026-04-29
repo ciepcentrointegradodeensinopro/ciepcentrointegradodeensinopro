@@ -16,10 +16,7 @@ const extractSupabaseUrl = (urlOrJwt: string | undefined, anonKey: string | unde
     try {
       const payloadBase64 = tokenToCheck.split('.')[1];
       if (payloadBase64) {
-        // Usa Buffer se estiver no servidor, atob no cliente
-        const payloadStr = typeof window !== 'undefined' 
-          ? window.atob(payloadBase64) 
-          : Buffer.from(payloadBase64, 'base64').toString('utf8');
+        const payloadStr = atob(payloadBase64);
         const payload = JSON.parse(payloadStr);
         if (payload.ref) {
           return `https://${payload.ref}.supabase.co`;

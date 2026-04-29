@@ -33,12 +33,9 @@ export async function uploadMaterialFileAction(formData: FormData) {
     const fileExt = file.name.split('.').pop();
     const fileNameUnique = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
     
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
     const { error } = await supabase.storage
       .from('materiais')
-      .upload(fileNameUnique, buffer, {
+      .upload(fileNameUnique, file, {
         contentType: file.type,
         upsert: true
       });
