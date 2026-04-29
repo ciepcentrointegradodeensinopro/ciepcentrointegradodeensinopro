@@ -384,8 +384,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             </ol>
           </div>
           <div className="pt-4">
-            <div className="flex items-center gap-2 text-xs text-slate-500 justify-center">
-              <span>Variáveis: NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY</span>
+            <div className="flex flex-col gap-2 text-[10px] text-slate-500 justify-center">
+              <span>Status das Variáveis:</span>
+              <div className="flex gap-4 justify-center">
+                <span className={isSupabaseConfigured && process.env.NEXT_PUBLIC_SUPABASE_URL ? "text-green-500" : "text-red-500"}>
+                  URL: {process.env.NEXT_PUBLIC_SUPABASE_URL ? '✓ Configurada' : '✗ Ausente'}
+                </span>
+                <span className={isSupabaseConfigured && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "text-green-500" : "text-red-500"}>
+                  ANON_KEY: {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '✓ Configurada' : '✗ Ausente'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
