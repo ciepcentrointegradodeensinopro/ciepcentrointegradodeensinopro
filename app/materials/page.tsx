@@ -7,7 +7,7 @@ import { FileText, Download, ChevronRight, Search, BookOpen, Clock, File, Plus, 
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { Toast } from '@/components/Toast';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 
@@ -29,16 +29,21 @@ export default function MaterialsListPage() {
   });
 
   const fetchMaterials = React.useCallback(async () => {
+    // Se o Supabase não estiver configurado, evite a chamada e mostre erro explicativo
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      setError("Supabase não configurado. Adicione NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     // Timeout de segurança para não travar a tela
     const timer = setTimeout(() => {
-      if (loading) {
-        setLoading(false);
-        setError("O servidor está demorando muito para responder. Tente atualizar a página (F5).");
-      }
-    }, 10000);
+      setLoading(false);
+      setError("O servidor está demorando muito para responder. Tente atualizar a página (F5).");
+    }, 15000); // Aumentado para 15s para dar mais margem
 
     try {
       console.log('MaterialsPage: Fetching materials...');
@@ -63,7 +68,7 @@ export default function MaterialsListPage() {
     } finally {
       setLoading(false);
     }
-  }, [loading]);
+  }, []); // Dependência vazia para evitar recriação infinita
 
   React.useEffect(() => {
     fetchMaterials();
