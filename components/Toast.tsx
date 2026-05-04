@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle2, X } from 'lucide-react';
+import { CheckCircle2, AlertCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { cn } from '@/lib/utils';
 
 interface ToastProps {
   message: string;
@@ -21,6 +22,8 @@ export function Toast({ message, isVisible, onClose, type = 'success' }: ToastPr
     }
   }, [isVisible, onClose]);
 
+  const isError = type === 'error';
+
   return (
     <AnimatePresence>
       {isVisible && (
@@ -30,9 +33,19 @@ export function Toast({ message, isVisible, onClose, type = 'success' }: ToastPr
           exit={{ opacity: 0, y: 20, scale: 0.9 }}
           className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] w-[calc(100%-2rem)] max-w-md"
         >
-          <div className="bg-slate-900 border border-green-500/50 rounded-2xl p-4 shadow-2xl shadow-green-500/20 flex items-center gap-4">
-            <div className="size-10 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
-              <CheckCircle2 className="w-6 h-6 text-green-500" />
+          <div className={cn(
+            "bg-slate-900 border rounded-2xl p-4 shadow-2xl flex items-center gap-4",
+            isError ? "border-red-500/50 shadow-red-500/10" : "border-green-500/50 shadow-green-500/10"
+          )}>
+            <div className={cn(
+              "size-10 rounded-full flex items-center justify-center shrink-0",
+              isError ? "bg-red-500/10" : "bg-green-500/10"
+            )}>
+              {isError ? (
+                <AlertCircle className="w-6 h-6 text-red-500" />
+              ) : (
+                <CheckCircle2 className="w-6 h-6 text-green-500" />
+              )}
             </div>
             <div className="flex-1">
               <p className="text-white font-bold text-sm">{message}</p>

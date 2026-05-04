@@ -32,7 +32,7 @@ async function ensureBucket(supabase: any, bucketName: string) {
 export async function uploadMaterialFileAction(formData: FormData) {
   const supabase = getSupabaseAdmin();
   if (!supabase) {
-    return { success: false, error: 'Configuração do servidor incompleta.' };
+    return { success: false, error: 'Configuração do servidor incompleta. Verifique a "SUPABASE_SERVICE_ROLE_KEY" nas configurações.' };
   }
 
   const file = formData.get('file') as File | null;
@@ -41,7 +41,7 @@ export async function uploadMaterialFileAction(formData: FormData) {
   }
 
   try {
-    await ensureBucket(supabase, 'materiais');
+    await ensureBucket(supabase, 'materials');
 
     const fileExt = file.name.split('.').pop();
     const fileNameUnique = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
@@ -51,7 +51,7 @@ export async function uploadMaterialFileAction(formData: FormData) {
     const buffer = Buffer.from(arrayBuffer);
 
     const { error } = await supabase.storage
-      .from('materiais')
+      .from('materials')
       .upload(fileNameUnique, buffer, {
         contentType: file.type,
         upsert: true
@@ -62,7 +62,7 @@ export async function uploadMaterialFileAction(formData: FormData) {
     }
 
     const { data: { publicUrl } } = supabase.storage
-      .from('materiais')
+      .from('materials')
       .getPublicUrl(fileNameUnique);
 
     return { success: true, url: publicUrl };
@@ -79,7 +79,7 @@ export async function uploadMaterialAction(payload: any) {
   if (!supabase) {
     return { 
       success: false, 
-      error: 'Configuração do servidor incompleta (service_role faltando).' 
+      error: 'Configuração do servidor incompleta. Você precisa adicionar "SUPABASE_SERVICE_ROLE_KEY" nas configurações do AI Studio (Settings > Secrets).' 
     };
   }
 

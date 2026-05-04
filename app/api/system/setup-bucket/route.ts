@@ -17,8 +17,8 @@ export async function GET() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        id: 'materiais',
-        name: 'materiais',
+        id: 'materials',
+        name: 'materials',
         public: true
       })
     });

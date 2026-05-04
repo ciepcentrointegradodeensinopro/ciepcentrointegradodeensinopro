@@ -183,9 +183,27 @@ export default function UploadMaterialPage() {
       const formUploadData = new FormData();
       formUploadData.append('file', file);
       
-      const uploadResult = await uploadMaterialFileAction(formUploadData);
+      let uploadResult = await uploadMaterialFileAction(formUploadData);
       
-      if (!uploadResult.success) {
+      if (!uploadResult.success && (uploadResult.error.includes('Configuração') || uploadResult.error.includes('service_role'))) {
+        console.log('Fallback: Tentando upload via client-side...');
+        const { data: clientData, error: clientError } = await supabase.storage
+          .from('materials')
+          .upload(fileNameUnique, file, {
+            contentType: file.type,
+            upsert: true
+          });
+        
+        if (clientError) {
+          throw new Error('Falha no fallback client-side: ' + clientError.message);
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('materials')
+          .getPublicUrl(fileNameUnique);
+
+        uploadResult = { success: true, url: publicUrl };
+      } else if (!uploadResult.success) {
         throw new Error(uploadResult.error || 'Erro desconhecido ao carregar o arquivo');
       }
 
@@ -265,9 +283,17 @@ export default function UploadMaterialPage() {
       };
 
       // Chamada para o servidor apenas para salvar o metadado (rápido)
-      const result = await uploadMaterialAction(payload);
+      let result = await uploadMaterialAction(payload);
 
-      if (!result.success) {
+      // Se falhar por erro de configuração do servidor, tentamos via client-side como fallback (funciona se o usuário for admin)
+      if (!result.success && (result.error.includes('Configuração') || result.error.includes('service_role'))) {
+        console.log('Fallaback: Tentando inserção via client-side...');
+        const { error: clientError } = await supabase.from('materials').insert([payload]);
+        if (clientError) {
+          throw new Error('Falha no fallback client-side: ' + clientError.message);
+        }
+        result = { success: true };
+      } else if (!result.success) {
         throw new Error(result.error);
       }
 
