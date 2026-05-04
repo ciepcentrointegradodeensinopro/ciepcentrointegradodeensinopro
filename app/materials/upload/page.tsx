@@ -62,9 +62,12 @@ export default function UploadMaterialPage() {
 
   // Google Picker Logic
   const handleGoogleDrive = () => {
-    if (!GOOGLE_API_KEY || !GOOGLE_CLIENT_ID) {
+    // Verificação robusta de configuração
+    const isPlaceholder = (id: string | undefined) => !id || id.includes('placeholder') || id === 'YOUR_CLIENT_ID';
+    
+    if (isPlaceholder(GOOGLE_CLIENT_ID) || isPlaceholder(GOOGLE_API_KEY)) {
       setToast({
-        message: 'Configuração do Google Drive ausente. Verifique as variáveis de ambiente (NEXT_PUBLIC_GOOGLE_API_KEY e NEXT_PUBLIC_GOOGLE_CLIENT_ID).',
+        message: 'Google Drive não configurado. Você precisa adicionar o Client ID e a API Key nas configurações do projeto (Cloud Console).',
         isVisible: true,
         type: 'error'
       });
@@ -84,27 +87,53 @@ export default function UploadMaterialPage() {
           scope: 'https://www.googleapis.com/auth/drive.readonly',
           immediate: false
         }, (authResult: any) => {
+          if (authResult?.error) {
+            console.error('Google Auth Error:', authResult.error);
+            setToast({
+              message: `Erro na autenticação Google: ${authResult.error}. Verifique se o Client ID está correto e se as URIs de redirecionamento estão autorizadas.`,
+              isVisible: true,
+              type: 'error'
+            });
+            return;
+          }
+
           if (authResult && !authResult.error) {
             const oauthToken = authResult.access_token;
             gapi.load('picker', () => {
-              const picker = new google.picker.PickerBuilder()
-                .addView(google.picker.ViewId.DOCS)
-                .setOAuthToken(oauthToken)
-                .setDeveloperKey(GOOGLE_API_KEY)
-                .setAppId(GOOGLE_APP_ID || '')
-                .setCallback((data: any) => {
-                  if (data.action === google.picker.Action.PICKED) {
-                    const doc = data.docs[0];
-                    setFileUrl(doc.url);
-                    setFileName(doc.name);
-                    if (!title) setTitle(doc.name);
-                  }
-                })
-                .build();
-              picker.setVisible(true);
+              try {
+                const picker = new google.picker.PickerBuilder()
+                  .addView(google.picker.ViewId.DOCS)
+                  .setOAuthToken(oauthToken)
+                  .setDeveloperKey(GOOGLE_API_KEY)
+                  .setAppId(GOOGLE_APP_ID || '')
+                  .setCallback((data: any) => {
+                    if (data.action === google.picker.Action.PICKED) {
+                      const doc = data.docs[0];
+                      setFileUrl(doc.url);
+                      setFileName(doc.name);
+                      if (!title) setTitle(doc.name);
+                    }
+                  })
+                  .build();
+                picker.setVisible(true);
+              } catch (pickerErr: any) {
+                console.error('Picker construction error:', pickerErr);
+                setToast({
+                  message: 'Falha ao abrir o seletor do Google Drive: ' + pickerErr.message,
+                  isVisible: true,
+                  type: 'error'
+                });
+              }
             });
           }
         });
+      });
+    };
+    script.onerror = () => {
+      setToast({
+        message: 'Falha ao carregar o script do Google. Verifique sua conexão.',
+        isVisible: true,
+        type: 'error'
       });
     };
     document.body.appendChild(script);
