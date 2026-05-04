@@ -18,6 +18,7 @@ export default function MaterialsListPage() {
   const { isAdmin, loading: authLoading } = useAuth();
   const mounted = useMounted();
   const [materials, setMaterials] = React.useState<any[]>([]);
+  const [disciplines, setDisciplines] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [selectedMaterial, setSelectedMaterial] = React.useState<any>(null);
@@ -27,6 +28,16 @@ export default function MaterialsListPage() {
     isVisible: false,
     type: 'success'
   });
+
+  const fetchDisciplines = React.useCallback(async () => {
+    if (!isSupabaseConfigured) return;
+    try {
+      const { data } = await supabase.from('disciplines').select('*');
+      if (data) setDisciplines(data);
+    } catch (e) {
+      console.error('Error fetching disciplines in list:', e);
+    }
+  }, []);
 
   const fetchMaterials = React.useCallback(async () => {
     // Se o Supabase não estiver configurado, evite a chamada e mostre erro explicativo
@@ -38,6 +49,9 @@ export default function MaterialsListPage() {
 
     setLoading(true);
     setError(null);
+
+    // Também busca as disciplinas para tradução de nomes
+    fetchDisciplines();
 
     // Timeout de segurança para não travar a tela
     const timer = setTimeout(() => {
@@ -68,7 +82,7 @@ export default function MaterialsListPage() {
     } finally {
       setLoading(false);
     }
-  }, []); // Dependência vazia para evitar recriação infinita
+  }, [fetchDisciplines]); // Dependência adicionada
 
   React.useEffect(() => {
     fetchMaterials();
@@ -101,6 +115,9 @@ export default function MaterialsListPage() {
   };
 
   const getDisciplineName = (key: string) => {
+    const found = disciplines.find(d => d.slug === key);
+    if (found) return found.name;
+
     const mapping: Record<string, string> = {
       motos: 'Mecânica de Motos',
       auto: 'Mecânica Automotiva',

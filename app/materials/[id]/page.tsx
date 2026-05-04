@@ -17,6 +17,7 @@ export default function MaterialDetailsPage() {
   const router = useRouter();
   const mounted = useMounted();
   const [material, setMaterial] = React.useState<any>(null);
+  const [disciplines, setDisciplines] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [isViewerOpen, setIsViewerOpen] = React.useState(false);
@@ -36,6 +37,10 @@ export default function MaterialDetailsPage() {
     }, 10000);
 
     try {
+      // Também busca as disciplinas para tradução de nomes
+      const { data: discData } = await supabase.from('disciplines').select('*');
+      if (discData) setDisciplines(discData);
+
       const { data, error: supabaseError } = await supabase
         .from('materials')
         .select('*')
@@ -127,6 +132,9 @@ export default function MaterialDetailsPage() {
   };
 
   const getDisciplineName = (key: string) => {
+    const found = disciplines.find(d => d.slug === key);
+    if (found) return found.name;
+
     const mapping: Record<string, string> = {
       motos: 'Mecânica de Motos',
       auto: 'Mecânica Automotiva',

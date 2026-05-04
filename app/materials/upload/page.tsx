@@ -22,28 +22,42 @@ export default function UploadMaterialPage() {
   const [loading, setLoading] = React.useState(false);
   const [disciplines, setDisciplines] = React.useState<any[]>([]);
   const [loadingDisciplines, setLoadingDisciplines] = React.useState(true);
+  const [isSupabaseReady, setIsSupabaseReady] = React.useState(false);
 
-  React.useEffect(() => {
-    const fetchDisciplines = async () => {
+  const fetchDisciplines = React.useCallback(async () => {
+    if (!isSupabaseConfigured) {
+      setLoadingDisciplines(false);
+      setDisciplines([
+        { slug: 'motos', name: 'Mecânica de Motos' },
+        { slug: 'auto', name: 'Mecânica Automotiva' },
+        { slug: 'eletrica', name: 'Mecânica Elétrica' },
+      ]);
+      return;
+    }
+
+    setLoadingDisciplines(true);
+    try {
       const { data, error } = await supabase
         .from('disciplines')
         .select('*')
         .order('name', { ascending: true });
 
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         setDisciplines(data);
-      } else {
-        // Fallback
-        setDisciplines([
-          { slug: 'motos', name: 'Mecânica de Motos' },
-          { slug: 'auto', name: 'Mecânica Automotiva' },
-          { slug: 'eletrica', name: 'Mecânica Elétrica' },
-        ]);
+      } else if (error) {
+        console.error('Error fetching disciplines:', error);
       }
+    } catch (err) {
+      console.error('Exception fetching disciplines:', err);
+    } finally {
       setLoadingDisciplines(false);
-    };
-    fetchDisciplines();
+    }
   }, []);
+
+  React.useEffect(() => {
+    setIsSupabaseReady(isSupabaseConfigured);
+    fetchDisciplines();
+  }, [fetchDisciplines]);
   const [showSuccess, setShowSuccess] = React.useState(false);
   const [toast, setToast] = React.useState<{ message: string; isVisible: boolean; type: 'success' | 'error' }>({
     message: '',
@@ -64,6 +78,7 @@ export default function UploadMaterialPage() {
   const handleGoogleDrive = () => {
     // Verificação robusta de configuração
     const isPlaceholder = (id: string | undefined) => !id || id.includes('placeholder') || id === 'YOUR_CLIENT_ID';
+    const isInvalidFormat = (id: string | undefined) => id && !id.endsWith('.apps.googleusercontent.com');
     
     if (isPlaceholder(GOOGLE_CLIENT_ID) || isPlaceholder(GOOGLE_API_KEY)) {
       setToast({
@@ -73,6 +88,17 @@ export default function UploadMaterialPage() {
       });
       return;
     }
+
+    if (isInvalidFormat(GOOGLE_CLIENT_ID)) {
+      setToast({
+        message: 'Formato de Client ID inválido. Ele deve terminar com ".apps.googleusercontent.com". Verifique se você copiou o ID correto.',
+        isVisible: true,
+        type: 'error'
+      });
+      return;
+    }
+
+    console.log('Iniciando Google Auth com Client ID:', GOOGLE_CLIENT_ID?.substring(0, 5) + '...');
 
     // Load Google API
     const script = document.createElement('script');
@@ -89,8 +115,9 @@ export default function UploadMaterialPage() {
         }, (authResult: any) => {
           if (authResult?.error) {
             console.error('Google Auth Error:', authResult.error);
+            const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'URL do seu app';
             setToast({
-              message: `Erro na autenticação Google: ${authResult.error}. Verifique se o Client ID está correto e se as URIs de redirecionamento estão autorizadas.`,
+              message: `Erro 401: invalid_client ou similar. Verifique: 1. O Client ID está correto. 2. A origem "${currentOrigin}" está adicionada em "Origens JavaScript autorizadas" no Google Cloud Console.`,
               isVisible: true,
               type: 'error'
             });
@@ -432,16 +459,22 @@ export default function UploadMaterialPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-slate-300">Disciplina</label>
-                <select 
-                  value={discipline}
-                  onChange={(e) => setDiscipline(e.target.value)}
-                  className="w-full appearance-none rounded-xl border border-slate-800 bg-slate-900 h-14 px-4 focus:ring-2 focus:ring-green-500 outline-none transition-all"
-                >
-                  <option value="">Selecione a disciplina</option>
-                  {disciplines.map(d => (
-                    <option key={d.slug} value={d.slug}>{d.name}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select 
+                    value={discipline}
+                    onChange={(e) => setDiscipline(e.target.value)}
+                    className="w-full appearance-none rounded-xl border border-slate-800 bg-slate-900 h-14 px-4 focus:ring-2 focus:ring-green-500 outline-none transition-all disabled:opacity-50"
+                    disabled={loadingDisciplines}
+                  >
+                    <option value="">{loadingDisciplines ? 'Carregando disciplinas...' : 'Selecione a disciplina'}</option>
+                    {disciplines.map(d => (
+                      <option key={d.slug} value={d.slug}>{d.name}</option>
+                    ))}
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                    <Layers className="w-5 h-5" />
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-2">
