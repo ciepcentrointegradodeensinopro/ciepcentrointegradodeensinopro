@@ -185,8 +185,15 @@ export default function UploadMaterialPage() {
       
       let uploadResult = await uploadMaterialFileAction(formUploadData);
       
-      if (!uploadResult.success && (uploadResult.error.includes('Configuração') || uploadResult.error.includes('service_role'))) {
-        console.log('Fallback: Tentando upload via client-side...');
+      const isServerError = !uploadResult.success && (
+        uploadResult.error.includes('Configuração') || 
+        uploadResult.error.includes('service_role') ||
+        uploadResult.error.includes('unexpected response') ||
+        uploadResult.error.includes('Failed to fetch')
+      );
+
+      if (isServerError) {
+        console.log('Fallback: Tentando upload via client-side devido a erro no servidor:', uploadResult.error);
         const { data: clientData, error: clientError } = await supabase.storage
           .from('materials')
           .upload(fileNameUnique, file, {
@@ -285,9 +292,15 @@ export default function UploadMaterialPage() {
       // Chamada para o servidor apenas para salvar o metadado (rápido)
       let result = await uploadMaterialAction(payload);
 
+      const isSaveServerError = !result.success && (
+        result.error.includes('Configuração') || 
+        result.error.includes('service_role') ||
+        result.error.includes('unexpected response')
+      );
+
       // Se falhar por erro de configuração do servidor, tentamos via client-side como fallback (funciona se o usuário for admin)
-      if (!result.success && (result.error.includes('Configuração') || result.error.includes('service_role'))) {
-        console.log('Fallaback: Tentando inserção via client-side...');
+      if (isSaveServerError) {
+        console.log('Fallback: Tentando inserção via client-side devido a erro no servidor:', result.error);
         const { error: clientError } = await supabase.from('materials').insert([payload]);
         if (clientError) {
           throw new Error('Falha no fallback client-side: ' + clientError.message);
