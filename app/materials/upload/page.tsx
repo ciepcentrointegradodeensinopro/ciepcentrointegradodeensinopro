@@ -6,7 +6,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { CloudUpload, FileText, BookOpen, Layers, Eye, Send, ExternalLink, Link as LinkIcon, Upload, X as CloseIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { Toast } from '@/components/Toast';
 import { uploadMaterialAction, uploadMaterialFileAction } from '@/app/actions/materials';
@@ -293,9 +293,9 @@ export default function UploadMaterialPage() {
       let result = await uploadMaterialAction(payload);
 
       const isSaveServerError = !result.success && (
-        result.error.includes('Configuração') || 
-        result.error.includes('service_role') ||
-        result.error.includes('unexpected response')
+        result.error?.includes('Configuração') ||
+        result.error?.includes('service_role') ||
+        result.error?.includes('unexpected response')
       );
 
       // Se falhar por erro de configuração do servidor, tentamos via client-side como fallback (funciona se o usuário for admin)

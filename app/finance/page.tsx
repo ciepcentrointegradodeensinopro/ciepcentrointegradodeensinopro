@@ -29,10 +29,14 @@ export default function FinancePage() {
   });
 
   const fetchData = React.useCallback(async () => {
-    if (!isAdmin) return;
-    
-    let query = supabase.from('payments').select('*, profiles(full_name)');
-    
+    // Admin vê os boletos de todos os alunos; o aluno vê só os próprios
+    // (a RLS da tabela payments já restringe cada aluno às suas próprias
+    // linhas, então esse filtro no client é só para trazer os dados certos,
+    // não é a camada de segurança).
+    const query = isAdmin
+      ? supabase.from('payments').select('*, profiles(full_name)')
+      : supabase.from('payments').select('*').eq('student_id', profile?.id);
+
     const { data: paymentsData, error } = await query.order('due_date', { ascending: false });
 
     if (!error) {
@@ -43,15 +47,13 @@ export default function FinancePage() {
       setTotalOpen(open);
     }
     setLoading(false);
-  }, [isAdmin]);
+  }, [isAdmin, profile?.id]);
 
   React.useEffect(() => {
-    if (!authLoading && !isAdmin) {
-      router.push('/dashboard');
-    } else if (!authLoading && isAdmin) {
-      fetchData();
-    }
-  }, [authLoading, isAdmin, router, fetchData]);
+    if (authLoading) return;
+    if (!isAdmin && !profile?.id) return;
+    fetchData();
+  }, [authLoading, isAdmin, profile?.id, fetchData]);
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('payments').delete().eq('id', id);

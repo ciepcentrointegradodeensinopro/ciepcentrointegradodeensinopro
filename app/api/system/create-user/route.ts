@@ -1,39 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getSupabaseAdmin, supabase } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
+import { requireAdmin } from '@/lib/admin-auth';
 
 export async function POST(request: Request) {
   try {
     // 1. Verify if the requester is an admin
-    const authHeader = request.headers.get('Authorization');
-    let token = '';
-    
-    if (authHeader?.startsWith('Bearer ')) {
-      token = authHeader.substring(7);
-    }
-
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized: No token provided' }, { status: 401 });
-    }
-
-    // Verify the user with the token
-    const { data: { user: requester }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !requester) {
-      return NextResponse.json({ error: 'Unauthorized: Invalid token' }, { status: 401 });
-    }
-
-    // Check if requester is admin
-    const { data: requesterProfile, error: profileFetchError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('user_id', requester.id)
-      .single();
-
-    if (profileFetchError || requesterProfile?.role !== 'admin') {
-      // Check if it's the default admin email
-      const adminEmails = ['ciepcentrointegradodeensinopro@gmail.com', 'test@gmail.com'];
-      if (!requester.email || !adminEmails.includes(requester.email)) {
-        return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-      }
+    const authResult = await requireAdmin(request);
+    if ('error' in authResult) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
     // 2. Parse request body
